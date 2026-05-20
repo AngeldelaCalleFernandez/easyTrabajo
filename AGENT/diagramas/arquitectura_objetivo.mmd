@@ -1,0 +1,72 @@
+flowchart LR
+    %% EasyParte - Arquitectura objetivo
+
+    subgraph F["Frontend Angular"]
+        F1["Layouts\nAuthLayout / DashboardLayout"]
+        F2["Features\nDashboard · Avisos · Presupuestos · Partes · Clientes"]
+        F3["Core Services\nAuth · Empresa · Suscripción · Avisos · Partes"]
+        F4["Guards\nauthGuard · roleGuard · tenantGuard · subscriptionGuard"]
+        F5["Interceptors\nAuth · Error · Loading"]
+        F6["UI Compartida\nNavbar · Modales · Alertas · Cards · Tablas"]
+    end
+
+    subgraph API["API REST PHP"]
+        A1["public/index.php\nFront Controller"]
+        A2["routes/api.php\nRouter"]
+        A3["Middlewares\nAuth · Role · Tenant · Subscription"]
+        A4["Controllers\nAuth · Cliente · Aviso · Presupuesto · Parte · Admin"]
+        A5["Services\nReglas de negocio"]
+        A6["Repositories\nConsultas PDO"]
+        A7["Helpers\nJwtService · ResponseFactory · Validator · PasswordHasher"]
+        A8["AuditLogger"]
+        A9["HashService"]
+        A10["ExportacionService"]
+    end
+
+    subgraph DB["MariaDB / MySQL"]
+        D1[("Modelo SaaS\nEmpresa · Plan · Suscripción")]
+        D2[("Usuarios y roles\nUsuario · EmpresaUsuario · Rol")]
+        D3[("Operativa\nCliente · Aviso · Presupuesto · Parte")]
+        D4[("Materiales\nMaterial · Movimiento almacén")]
+        D5[("Auditoría e integridad\nAuditoriaEvento · ParteHash · ParteFirma")]
+    end
+
+    subgraph EXT["Sistemas externos futuros"]
+        E1["Programa de facturación"]
+        E2["ERP / Contabilidad"]
+        E3["Importación-exportación materiales"]
+    end
+
+    F1 --> F2
+    F2 --> F3
+    F2 --> F6
+    F4 --> F3
+    F5 --> F3
+
+    F3 -- "HTTP/JSON" --> A1
+    A1 --> A2
+    A2 --> A3
+    A3 --> A4
+    A4 --> A5
+    A5 --> A6
+    A5 --> A8
+    A5 --> A9
+    A5 --> A10
+    A5 --> A7
+    A6 -- "PDO / SQL preparado" --> D1
+    A6 --> D2
+    A6 --> D3
+    A6 --> D4
+    A8 --> D5
+    A9 --> D5
+    A10 --> EXT
+
+    classDef frontend fill:#E8F7EF,stroke:#166534,color:#111827
+    classDef backend fill:#EAF2FF,stroke:#2563EB,color:#111827
+    classDef database fill:#FFF7ED,stroke:#F97316,color:#111827
+    classDef external fill:#F5F3FF,stroke:#7C3AED,color:#111827
+
+    class F1,F2,F3,F4,F5,F6 frontend
+    class A1,A2,A3,A4,A5,A6,A7,A8,A9,A10 backend
+    class D1,D2,D3,D4,D5 database
+    class E1,E2,E3 external

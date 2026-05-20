@@ -1,0 +1,54 @@
+flowchart TD
+    A[Cliente solicita trabajo] --> B{¿Necesita presupuesto previo?}
+
+    B -- Sí --> C[Crear presupuesto]
+    C --> D[Añadir líneas: mano de obra, material, desplazamiento, servicio]
+    D --> E[Enviar presupuesto]
+    E --> F{¿Cliente acepta?}
+    F -- No --> G[Presupuesto rechazado / cancelado]
+    F -- Sí --> H[Presupuesto aceptado]
+
+    B -- No --> I[Crear aviso directamente]
+    H --> J{¿Existe aviso?}
+    J -- No --> I
+    J -- Sí --> K[Vincular presupuesto a aviso]
+
+    I --> L[Aviso pendiente]
+    K --> L
+    L --> M[Asignar uno o varios técnicos]
+    M --> N[Aviso asignado]
+    N --> O[Aviso en proceso]
+
+    O --> P{¿Crear parte de trabajo?}
+    P -- No --> O
+    P -- Sí --> Q[Parte abierto]
+
+    Q --> R[Añadir empleados participantes]
+    R --> S[Registrar horas]
+    S --> T[Registrar materiales]
+    T --> U[Registrar observaciones]
+    U --> V[Capturar firma cliente]
+    V --> W[Guardar imagen de firma]
+    W --> X[Generar hash de firma]
+
+    X --> Y{¿Trabajo finalizado?}
+    Y -- No --> S
+    Y -- Sí --> Z[Cerrar parte]
+
+    Z --> AA[Generar hash de integridad]
+    AA --> AB[Registrar auditoría]
+    AB --> AC[Parte cerrado]
+    AC --> AD{¿Dentro de 7 días?}
+
+    AD -- Sí --> AE[Rectificación por técnico si procede]
+    AD -- No --> AF[Rectificación solo con autorización]
+    AE --> AG[Actualizar versión y hash]
+    AF --> AG
+    AG --> AB
+
+    AC --> AH{¿Se factura?}
+    AH -- No --> AI[Parte cerrado rectificable según reglas]
+    AH -- Sí --> AJ[Exportar a facturación]
+    AJ --> AK[Marcar como facturado]
+    AK --> AL[Bloqueo definitivo]
+    AL --> AM[Aviso finalizado si no queda trabajo pendiente]
