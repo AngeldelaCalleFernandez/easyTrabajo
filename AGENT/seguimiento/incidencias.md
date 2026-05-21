@@ -18,7 +18,7 @@ bloqueada
 ID: INC-0001
 Titulo: CORS abierto a cualquier origen
 Prioridad: critica
-Estado: abierta
+Estado: en revision
 Detectado por: Codex auditor tecnico
 Fecha: 2026-05-20
 
@@ -51,8 +51,21 @@ Riesgo de exposicion de API a origenes no controlados, especialmente si se anade
 
 Configurar CORS por entorno usando lista de origenes permitidos.
 
+### Correccion aplicada
+
+`backend/config/cors.php` permite configurar origenes, metodos, cabeceras y credenciales mediante variables de entorno. En entorno local/desarrollo mantiene compatibilidad con XAMPP usando `*` si no se define `CORS_ALLOWED_ORIGINS`; fuera de local no aplica wildcard por defecto y registra origenes rechazados con `error_log`.
+
+Variables esperadas:
+
+- `APP_ENV`
+- `CORS_ALLOWED_ORIGINS`
+- `CORS_ALLOWED_METHODS`
+- `CORS_ALLOWED_HEADERS`
+- `CORS_ALLOW_CREDENTIALS`
+
 ### Pruebas necesarias
 
+- [x] Prueba estatica de sintaxis PHP.
 - [ ] Prueba backend de cabeceras CORS.
 - [ ] Prueba frontend desde origen permitido.
 - [ ] Prueba negativa desde origen no permitido.
@@ -64,7 +77,7 @@ Configurar CORS por entorno usando lista de origenes permitidos.
 ID: INC-0002
 Titulo: Credenciales de base de datos y usuario root en codigo
 Prioridad: critica
-Estado: abierta
+Estado: en revision
 Detectado por: Codex auditor tecnico
 Fecha: 2026-05-20
 
@@ -97,8 +110,23 @@ Riesgo critico para produccion y mala separacion de entornos.
 
 Crear configuracion por entorno y usar variables de entorno para credenciales.
 
+### Correccion aplicada
+
+`backend/config/database.php` lee la configuracion desde variables de entorno y conserva valores locales solo para `APP_ENV=local/development/dev/testing` o cuando `APP_ENV` no esta definido. Fuera de local exige configuracion explicita y bloquea `DB_USER=root`.
+
+Variables esperadas:
+
+- `APP_ENV`
+- `DB_HOST`
+- `DB_PORT`
+- `DB_NAME` o `DB_DATABASE`
+- `DB_USER` o `DB_USERNAME`
+- `DB_PASSWORD`
+- `DB_CHARSET`
+
 ### Pruebas necesarias
 
+- [x] Prueba estatica de sintaxis PHP.
 - [ ] Prueba local con variables de entorno.
 - [ ] Prueba de conexion con usuario DB limitado.
 
@@ -109,7 +137,7 @@ Crear configuracion por entorno y usar variables de entorno para credenciales.
 ID: INC-0003
 Titulo: Errores internos de base de datos expuestos
 Prioridad: critica
-Estado: abierta
+Estado: en revision
 Detectado por: Codex auditor tecnico
 Fecha: 2026-05-20
 
@@ -142,10 +170,15 @@ Exposicion de rutas, host, base de datos o informacion SQL.
 
 Registrar con `error_log` y devolver error generico homogeneo.
 
+### Correccion aplicada
+
+`backend/config/database.php` ya no devuelve el mensaje interno de PDO al cliente. En errores de configuracion o conexion devuelve JSON generico con HTTP 500 y registra el detalle tecnico mediante `error_log` con prefijos `[EasyParte][DB_CONFIG]` o `[EasyParte][DB_CONNECTION]`.
+
 ### Pruebas necesarias
 
-- [ ] Simular fallo de conexion.
-- [ ] Verificar que el cliente no recibe detalle tecnico.
+- [x] Prueba estatica de sintaxis PHP.
+- [x] Simular fallo de conexion.
+- [x] Verificar que el cliente no recibe detalle tecnico.
 
 ---
 
@@ -154,7 +187,7 @@ Registrar con `error_log` y devolver error generico homogeneo.
 ID: INC-0004
 Titulo: Secreto JWT por defecto hardcodeado
 Prioridad: critica
-Estado: abierta
+Estado: en revision
 Detectado por: Codex auditor tecnico
 Fecha: 2026-05-20
 
@@ -187,10 +220,20 @@ Tokens falsificables si se despliega sin variable de entorno segura.
 
 Eliminar fallback para produccion y validar configuracion de entorno.
 
+### Correccion aplicada
+
+`backend/helpers/jwt.php` mantiene la clave local de compatibilidad solo para `APP_ENV=local/development/dev/testing`. Fuera de esos entornos, `JWT_SECRET` es obligatorio; si falta, se registra el error tecnico con `error_log` y el cliente recibe un error generico.
+
+Variables esperadas:
+
+- `APP_ENV`
+- `JWT_SECRET`
+
 ### Pruebas necesarias
 
+- [x] Prueba estatica de sintaxis PHP.
 - [ ] Prueba de login con `JWT_SECRET` configurado.
-- [ ] Prueba de arranque/fallo seguro sin secreto en entorno no local.
+- [x] Prueba de arranque/fallo seguro sin secreto en entorno no local.
 
 ---
 

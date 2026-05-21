@@ -1,8 +1,44 @@
 <?php
 
 class JWT {
+    private static function env($key, $default = null) {
+        $value = getenv($key);
+
+        if ($value === false && isset($_ENV[$key])) {
+            $value = $_ENV[$key];
+        }
+
+        if ($value === false && isset($_SERVER[$key])) {
+            $value = $_SERVER[$key];
+        }
+
+        return ($value === false || $value === '') ? $default : $value;
+    }
+
+    private static function isLocalEnv() {
+        $appEnv = strtolower(self::env('APP_ENV', 'local'));
+        return in_array($appEnv, ['local', 'development', 'dev', 'testing'], true);
+    }
+
+    private static function failConfiguration($message) {
+        error_log('[EasyParte][JWT_CONFIG] ' . $message);
+        http_response_code(500);
+        echo json_encode(["error" => "Error interno de configuracion."]);
+        exit();
+    }
+
     private static function getSecret() {
-        return getenv('JWT_SECRET') ?: 'clave_local_para_desarrollo_easyparte_2026';
+        $secret = self::env('JWT_SECRET', null);
+
+        if ($secret !== null) {
+            return $secret;
+        }
+
+        if (self::isLocalEnv()) {
+            return 'clave_local_para_desarrollo_easyparte_2026';
+        }
+
+        self::failConfiguration('Missing required environment variable: JWT_SECRET');
     }
 
     public static function encode($payload) {

@@ -143,7 +143,7 @@ Antes de cambios de codigo, revisar estado remoto y crear rama especifica.
 
 Tipo: seguridad
 Prioridad: critica
-Estado: pendiente
+Estado: parcial
 Relacionado con: INC-0001, INC-0002, INC-0003, INC-0004
 Detectado por: Codex auditor tecnico
 Fecha: 2026-05-20
@@ -164,11 +164,27 @@ El estado actual es local/demo y no apto para produccion.
 
 ### Criterios de aceptacion
 
-- [ ] CORS restringible por entorno.
-- [ ] Credenciales fuera del codigo.
-- [ ] Sin usuario DB root en configuracion de produccion.
-- [ ] Sin exposicion de mensajes PDO al cliente.
-- [ ] `JWT_SECRET` obligatorio fuera de entorno local.
+- [x] CORS restringible por entorno.
+- [x] Credenciales configurables por entorno.
+- [x] Sin usuario DB root en configuracion de produccion.
+- [x] Sin exposicion de mensajes PDO al cliente.
+- [x] `JWT_SECRET` obligatorio fuera de entorno local.
+- [ ] Validacion manual completa en XAMPP.
+
+### Variables de entorno esperadas
+
+- `APP_ENV=local|development|testing|staging|production`
+- `DB_HOST`
+- `DB_PORT`
+- `DB_NAME` o `DB_DATABASE`
+- `DB_USER` o `DB_USERNAME`
+- `DB_PASSWORD`
+- `DB_CHARSET`
+- `JWT_SECRET`
+- `CORS_ALLOWED_ORIGINS`
+- `CORS_ALLOWED_METHODS`
+- `CORS_ALLOWED_HEADERS`
+- `CORS_ALLOW_CREDENTIALS`
 
 ### Riesgos
 
@@ -176,7 +192,7 @@ Afecta login, API y despliegue.
 
 ### Siguiente paso
 
-Crear rama `security/configuracion-entornos`.
+Validar login, conexion a base de datos y cabeceras CORS en XAMPP local, y repetir con variables de entorno simulando produccion.
 
 ---
 

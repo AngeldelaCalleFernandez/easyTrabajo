@@ -54,3 +54,26 @@ Pruebas realizadas: Revision estatica con lectura de documentacion, listado de a
 Riesgos: No se ha validado comportamiento en ejecucion. La auditoria detecta riesgos criticos pendientes en seguridad, tenant, roles, CORS, configuracion y trazabilidad.
 Estado: pendiente de revision
 Siguiente paso: Revisar la auditoria y priorizar una primera tarea de seguridad, preferiblemente configuracion de entorno/CORS/JWT o tenant/backend.
+
+---
+
+## CAMBIO-0003 - Configuracion base de seguridad por entorno
+
+Fecha: 2026-05-20
+Agente: Codex / agente backend EasyParte
+Rama: security/configuracion-entornos
+Tipo de cambio: seguridad
+Resumen: Se ajusta la configuracion base de backend para permitir variables de entorno en CORS, base de datos y JWT, manteniendo compatibilidad local con XAMPP y evitando exponer errores internos de PDO al cliente.
+Archivos modificados:
+- `backend/config/cors.php`
+- `backend/config/database.php`
+- `backend/helpers/jwt.php`
+- `AGENT/seguimiento/incidencias.md`
+- `AGENT/seguimiento/pendientes.md`
+- `AGENT/seguimiento/registro_cambios_agentes.md`
+
+Motivo: Corregir INC-0001, INC-0002, INC-0003 e INC-0004 sin modificar controladores, frontend, base de datos ni rutas.
+Pruebas realizadas: Validacion de sintaxis PHP con `php -l` sobre `backend/config/cors.php`, `backend/config/database.php` y `backend/helpers/jwt.php`. Simulacion CLI de fallo de conexion DB en `APP_ENV=production`, verificando respuesta generica y detalle en `error_log`. Simulacion CLI de `JWT_SECRET` ausente en `APP_ENV=production`, verificando error generico y detalle en `error_log`.
+Riesgos: Pendiente de prueba manual en XAMPP para confirmar login, conexion local y cabeceras CORS. En entornos no locales, faltas de `DB_*` o `JWT_SECRET` provocaran HTTP 500 generico y registro tecnico en logs.
+Estado: pendiente de revision
+Siguiente paso: Ejecutar pruebas manuales de conexion, login, fallo de BD y CORS permitido/denegado.
