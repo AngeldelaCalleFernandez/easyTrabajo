@@ -644,7 +644,7 @@ TENANT-MIN-005 queda documentada como `correcto`: login, dashboard, clientes, av
 ID: INC-0012
 Titulo: URL de API hardcodeada y duplicada en servicios Angular
 Prioridad: media
-Estado: en revision
+Estado: resuelta
 Detectado por: Codex auditor tecnico
 Fecha: 2026-05-20
 
@@ -694,19 +694,23 @@ Los servicios `auth`, `admin`, `clientes`, `avisos`, `partes` y `dashboard` impo
 
 Validacion documentada en:
 
-- `AGENT/testing/frontend_api_url.md`
+- `docs/testing/frontend_api_url.md`
 
 ### Pruebas necesarias
 
 - [x] Revision estatica de servicios sin URL hardcodeada duplicada.
 - [x] Build con configuracion local.
-- [ ] Prueba manual de login.
-- [ ] Prueba manual de dashboard.
-- [ ] Prueba manual de clientes.
-- [ ] Prueba manual de avisos.
-- [ ] Prueba manual de partes/albaranes.
-- [ ] Prueba manual de administracion.
+- [x] Prueba manual de login.
+- [x] Prueba manual de dashboard.
+- [x] Prueba manual de clientes.
+- [x] Prueba manual de avisos.
+- [x] Prueba manual de partes/albaranes.
+- [x] Prueba manual de administracion.
 - [ ] Build con configuracion produccion cuando exista configuracion de entorno productiva.
+
+### Validacion de cierre
+
+Las pruebas manuales de login, dashboard, clientes, avisos, partes/albaranes y administracion fueron ejecutadas por la persona responsable del proyecto y registradas en `docs/testing/frontend_api_url.md`. No se detectaron errores derivados de la centralizacion de `API_BASE_URL`.
 
 ---
 

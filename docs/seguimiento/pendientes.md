@@ -514,7 +514,7 @@ Implementar despues de seguridad/tenant.
 
 Tipo: mejora
 Prioridad: media
-Estado: parcial
+Estado: implementado
 Relacionado con: INC-0012
 Detectado por: Codex auditor tecnico
 Fecha: 2026-05-20
@@ -537,7 +537,7 @@ Facilitar despliegue y evitar inconsistencias.
 - [x] API URL definida en un unico sitio.
 - [x] Servicios consumen configuracion comun.
 - [x] Build local sigue funcionando.
-- [ ] Pruebas manuales de login, dashboard, clientes, avisos, partes/albaranes y administracion documentadas.
+- [x] Pruebas manuales de login, dashboard, clientes, avisos, partes/albaranes y administracion documentadas.
 
 ### Avance aplicado
 
@@ -547,15 +547,15 @@ Fase `INC-0012`:
 - Se actualizan los servicios Angular principales para consumir la configuracion comun.
 - La URL local XAMPP se mantiene sin cambios.
 - `npm run build` finaliza correctamente tras repetir fuera del sandbox por `spawn EPERM`.
-- Las pruebas manuales quedan documentadas como pendientes en `AGENT/testing/frontend_api_url.md`.
+- Las pruebas manuales de login, dashboard, clientes, avisos, partes/albaranes y administracion fueron ejecutadas por la persona responsable del proyecto y registradas como correctas en `docs/testing/frontend_api_url.md`.
 
 ### Riesgos
 
-Bajo-medio. Puede romper llamadas HTTP si se configura mal.
+Bajo. La URL sigue centralizada en un unico punto; futuros despliegues deberan ajustar la configuracion de API cuando exista una configuracion productiva formal.
 
 ### Siguiente paso
 
-Ejecutar pruebas manuales en XAMPP/navegador y, si son correctas, cerrar INC-0012 como `resuelta`.
+Mantener `API_BASE_URL` como punto unico de configuracion hasta definir una estrategia formal de entornos frontend para produccion.
 
 ---
 
