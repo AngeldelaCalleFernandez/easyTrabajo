@@ -1,5 +1,6 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { API_BASE_URL } from '../config/api.config';
 
 // Definimos la estructura exacta que nos devuelve PHP
 export interface DashboardResumen {
@@ -15,7 +16,7 @@ export interface DashboardResumen {
 })
 export class DashboardService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost/easyTrabajo/backend/public/api';
+  private apiUrl = API_BASE_URL;
 
   // Usamos un Signal para que la vista se actualice
   public resumen = signal<DashboardResumen | null>(null);

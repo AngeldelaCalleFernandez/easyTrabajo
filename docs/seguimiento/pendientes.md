@@ -143,7 +143,7 @@ Antes de cambios de codigo, revisar estado remoto y crear rama especifica.
 
 Tipo: seguridad
 Prioridad: critica
-Estado: parcial
+Estado: implementado
 Relacionado con: INC-0001, INC-0002, INC-0003, INC-0004
 Detectado por: Codex auditor tecnico
 Fecha: 2026-05-20
@@ -169,7 +169,8 @@ El estado actual es local/demo y no apto para produccion.
 - [x] Sin usuario DB root en configuracion de produccion.
 - [x] Sin exposicion de mensajes PDO al cliente.
 - [x] `JWT_SECRET` obligatorio fuera de entorno local.
-- [ ] Validacion manual completa en XAMPP.
+- [x] VAL-CONFIG-009 repetida tras loader `.env`.
+- [x] Validacion manual completa en XAMPP documentada en `AGENT/testing/validacion_configuracion_seguridad.md`.
 
 ### Variables de entorno esperadas
 
@@ -186,13 +187,21 @@ El estado actual es local/demo y no apto para produccion.
 - `CORS_ALLOWED_HEADERS`
 - `CORS_ALLOW_CREDENTIALS`
 
+### Carga de variables
+
+- `backend/config/env.php` carga `.env` desde la raiz del repositorio y desde `backend/.env` si existen.
+- `.env.example` documenta las variables esperadas sin secretos reales.
+- `.env` y `backend/.env` quedan ignorados por Git.
+- `backend/public/.htaccess` no debe usarse como fuente principal de secretos ni de entorno.
+- En `APP_ENV=production`, una prueba de login completa debe usar `DB_USER` no root; root queda bloqueado intencionadamente fuera de local/desarrollo.
+
 ### Riesgos
 
-Afecta login, API y despliegue.
+Riesgo residual bajo. La fase de configuracion base queda implementada, pero despliegues reales deben crear `.env` con secretos propios y usuario MySQL no root.
 
 ### Siguiente paso
 
-Validar login, conexion a base de datos y cabeceras CORS en XAMPP local, y repetir con variables de entorno simulando produccion.
+Mantener JWT Bearer por compatibilidad actual. Evaluar cookie HttpOnly en una tarea futura separada, sin mezclarla con el cierre de configuracion base.
 
 ---
 
@@ -240,7 +249,7 @@ Disenar matriz minima sobre roles actuales antes de migrar a roles objetivo.
 
 Tipo: seguridad
 Prioridad: critica
-Estado: pendiente
+Estado: parcial
 Relacionado con: INC-0007, INC-0009, INC-0011
 Detectado por: Codex auditor tecnico
 Fecha: 2026-05-20
@@ -264,11 +273,26 @@ Hay filtrado parcial por `id_empresa`, pero no hay `TenantMiddleware` ni modelo 
 
 ### Criterios de aceptacion
 
-- [ ] `GET /api/empleados` filtra por empresa.
-- [ ] Crear/editar avisos valida cliente y empleado de empresa.
-- [ ] Crear/editar partes valida cliente, tarea y empleado de empresa.
-- [ ] Frontend no envia `id_empresa: 1`.
+- [x] `GET /api/empleados` filtra por empresa.
+- [x] Crear/editar avisos valida cliente, empleado y departamento de empresa.
+- [x] Crear/editar partes valida cliente, tarea y empleado de empresa.
+- [x] Frontend no envia `id_empresa: 1` en avisos ni administracion.
+- [x] Datos de prueba multiempresa preparados.
 - [ ] Prueba multiempresa positiva y negativa.
+- [ ] TenantMiddleware centralizado.
+- [ ] Modelo multiempresa completo.
+
+### Avance aplicado
+
+Fase minima `security/tenant-minimo`:
+
+- Se filtra `GET /api/empleados` por `id_empresa` del token.
+- Se validan IDs relacionados en creacion/edicion de avisos y partes.
+- Se eliminan `id_empresa: 1` de formularios frontend de avisos y administracion.
+- Se documentan pruebas manuales en `AGENT/testing/tenant_minimo.md`.
+- Se prepara guia de datos en `AGENT/testing/datos_prueba_multiempresa.md`.
+- Se crea seed opcional no destructivo en `bbdd/seed_multiempresa_pruebas.sql`.
+- Las pruebas manuales TENANT-MIN-001 a TENANT-MIN-005 quedan registradas como `correcto`.
 
 ### Riesgos
 
@@ -276,7 +300,7 @@ Critico por separacion de datos.
 
 ### Siguiente paso
 
-Corregir primero fugas directas sin cambiar aun todo el modelo de datos.
+Ejecutar pruebas multiempresa manuales y disenar `TenantMiddleware`/contexto centralizado en una fase posterior.
 
 ---
 
@@ -490,7 +514,7 @@ Implementar despues de seguridad/tenant.
 
 Tipo: mejora
 Prioridad: media
-Estado: pendiente
+Estado: parcial
 Relacionado con: INC-0012
 Detectado por: Codex auditor tecnico
 Fecha: 2026-05-20
@@ -510,9 +534,20 @@ Facilitar despliegue y evitar inconsistencias.
 
 ### Criterios de aceptacion
 
-- [ ] API URL definida en un unico sitio.
-- [ ] Servicios consumen configuracion comun.
-- [ ] Build local sigue funcionando.
+- [x] API URL definida en un unico sitio.
+- [x] Servicios consumen configuracion comun.
+- [x] Build local sigue funcionando.
+- [ ] Pruebas manuales de login, dashboard, clientes, avisos, partes/albaranes y administracion documentadas.
+
+### Avance aplicado
+
+Fase `INC-0012`:
+
+- Se crea `frontend/src/app/core/config/api.config.ts` con `API_BASE_URL`.
+- Se actualizan los servicios Angular principales para consumir la configuracion comun.
+- La URL local XAMPP se mantiene sin cambios.
+- `npm run build` finaliza correctamente tras repetir fuera del sandbox por `spawn EPERM`.
+- Las pruebas manuales quedan documentadas como pendientes en `AGENT/testing/frontend_api_url.md`.
 
 ### Riesgos
 
@@ -520,7 +555,7 @@ Bajo-medio. Puede romper llamadas HTTP si se configura mal.
 
 ### Siguiente paso
 
-Crear servicio/configuracion `environment` o constante central.
+Ejecutar pruebas manuales en XAMPP/navegador y, si son correctas, cerrar INC-0012 como `resuelta`.
 
 ---
 

@@ -1,5 +1,6 @@
 <?php
 //  Usamos __DIR__ para dar la ruta absoluta exacta y evitar fallos
+require_once __DIR__ . '/../config/env.php';
 require_once __DIR__ . '/../config/cors.php';
 //  Cabecera JSON
 header("Content-Type: application/json; charset=UTF-8");

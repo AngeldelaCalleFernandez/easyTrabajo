@@ -10,10 +10,11 @@ class EmpleadoController
     }
 
     // OBTENER TODOS LOS EMPLEADOS
-    public function getAll()
+    public function getAll($usuarioLogueado)
     {
-        $query = "SELECT * FROM " . $this->tabla . " WHERE activo = 1 ORDER BY nombre ASC";
+        $query = "SELECT * FROM " . $this->tabla . " WHERE activo = 1 AND id_empresa = :id_empresa ORDER BY nombre ASC";
         $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":id_empresa", $usuarioLogueado->id_empresa);
         $stmt->execute();
 
         if ($stmt->rowCount() > 0) {

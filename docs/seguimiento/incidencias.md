@@ -18,7 +18,7 @@ bloqueada
 ID: INC-0001
 Titulo: CORS abierto a cualquier origen
 Prioridad: critica
-Estado: en revision
+Estado: resuelta
 Detectado por: Codex auditor tecnico
 Fecha: 2026-05-20
 
@@ -63,12 +63,22 @@ Variables esperadas:
 - `CORS_ALLOWED_HEADERS`
 - `CORS_ALLOW_CREDENTIALS`
 
+Nota 2026-05-22: se anade loader simple en `backend/config/env.php` para cargar `.env` desde la raiz del repositorio o `backend/.env` antes de CORS, BD y JWT. `.htaccess` queda solo para rewrite/configuracion minima.
+
 ### Pruebas necesarias
 
 - [x] Prueba estatica de sintaxis PHP.
-- [ ] Prueba backend de cabeceras CORS.
-- [ ] Prueba frontend desde origen permitido.
-- [ ] Prueba negativa desde origen no permitido.
+- [x] Prueba backend de cabeceras CORS.
+- [x] Prueba frontend desde origen permitido.
+- [x] Prueba negativa desde origen no permitido.
+
+### Validacion de cierre
+
+VAL-CONFIG-006 y VAL-CONFIG-007 quedan en estado `correcto`.
+
+- En local, el origen `http://localhost:4200` funciona y no queda bloqueado por CORS.
+- En entorno no local simulado, un origen no permitido no recibe `Access-Control-Allow-Origin`.
+- El intento con origen no permitido queda registrado sin secretos.
 
 ---
 
@@ -77,7 +87,7 @@ Variables esperadas:
 ID: INC-0002
 Titulo: Credenciales de base de datos y usuario root en codigo
 Prioridad: critica
-Estado: en revision
+Estado: resuelta
 Detectado por: Codex auditor tecnico
 Fecha: 2026-05-20
 
@@ -124,11 +134,22 @@ Variables esperadas:
 - `DB_PASSWORD`
 - `DB_CHARSET`
 
+Nota 2026-05-22: la carga de variables se centraliza en `backend/config/env.php`. El archivo `.env` real debe quedar fuera de Git; `.env.example` documenta las variables esperadas sin secretos reales.
+
 ### Pruebas necesarias
 
 - [x] Prueba estatica de sintaxis PHP.
-- [ ] Prueba local con variables de entorno.
-- [ ] Prueba de conexion con usuario DB limitado.
+- [x] Prueba local con variables de entorno.
+- [x] Prueba de conexion con usuario DB limitado documentada como requisito para `APP_ENV=production`.
+
+### Validacion de cierre
+
+VAL-CONFIG-001, VAL-CONFIG-002, VAL-CONFIG-003 y VAL-CONFIG-009 quedan en estado `correcto`.
+
+- Local/XAMPP sigue funcionando con la configuracion local.
+- La configuracion se puede cargar desde `.env` en raiz o `backend/.env`.
+- `.env` y `backend/.env` quedan ignorados por Git.
+- En `APP_ENV=production`, `DB_USER=root` queda bloqueado de forma intencionada; una prueba completa de produccion simulada debe usar usuario MySQL no root.
 
 ---
 
@@ -137,7 +158,7 @@ Variables esperadas:
 ID: INC-0003
 Titulo: Errores internos de base de datos expuestos
 Prioridad: critica
-Estado: en revision
+Estado: resuelta
 Detectado por: Codex auditor tecnico
 Fecha: 2026-05-20
 
@@ -180,6 +201,14 @@ Registrar con `error_log` y devolver error generico homogeneo.
 - [x] Simular fallo de conexion.
 - [x] Verificar que el cliente no recibe detalle tecnico.
 
+### Validacion de cierre
+
+VAL-CONFIG-004 y VAL-CONFIG-005 quedan en estado `correcto`.
+
+- El fallo de conexion devuelve error generico al cliente.
+- No se exponen `SQLSTATE`, DSN, host, usuario, rutas internas ni trazas.
+- El detalle tecnico queda reservado a logs mediante `error_log`.
+
 ---
 
 ## INC-0004 - Secreto JWT por defecto hardcodeado
@@ -187,7 +216,7 @@ Registrar con `error_log` y devolver error generico homogeneo.
 ID: INC-0004
 Titulo: Secreto JWT por defecto hardcodeado
 Prioridad: critica
-Estado: en revision
+Estado: resuelta
 Detectado por: Codex auditor tecnico
 Fecha: 2026-05-20
 
@@ -229,11 +258,23 @@ Variables esperadas:
 - `APP_ENV`
 - `JWT_SECRET`
 
+Nota 2026-05-22: se corrige la carga de `JWT_SECRET` mediante loader `.env` propio y se retira `SetEnv APP_ENV local` de `.htaccess` para permitir simulacion estable de `APP_ENV=production`.
+
+### Validacion de cierre
+
+VAL-CONFIG-009 repetida mediante archivo `.env` temporal fuera del repositorio:
+
+- `APP_ENV=production` sin `JWT_SECRET` falla de forma controlada con error generico.
+- `APP_ENV=production` con `JWT_SECRET` definido permite emitir JWT.
+- No se documentaron tokens completos ni secretos.
+- Validacion adicional 2026-05-22: el loader se carga antes de CORS, base de datos y JWT; para login completo en produccion simulada debe usarse un usuario MySQL no root, porque `DB_USER=root` se bloquea intencionadamente fuera de local.
+
 ### Pruebas necesarias
 
 - [x] Prueba estatica de sintaxis PHP.
-- [ ] Prueba de login con `JWT_SECRET` configurado.
+- [x] Prueba de JWT con `JWT_SECRET` configurado en entorno no local.
 - [x] Prueba de arranque/fallo seguro sin secreto en entorno no local.
+- [x] Repetir VAL-CONFIG-009 tras loader `.env`.
 
 ---
 
@@ -337,7 +378,7 @@ Crear middlewares/servicios centralizados antes de ampliar funcionalidades.
 ID: INC-0007
 Titulo: Listado de empleados no filtra por empresa
 Prioridad: critica
-Estado: abierta
+Estado: resuelta
 Detectado por: Codex auditor tecnico
 Fecha: 2026-05-20
 
@@ -371,9 +412,18 @@ Fuga de datos entre empresas.
 
 Filtrar por `id_empresa` del contexto autenticado y cubrir con prueba multiempresa.
 
+### Correccion aplicada
+
+`EmpleadoController::getAll()` filtra por `id_empresa` recibido desde el token/contexto autenticado. La ruta ya pasaba `$usuarioLogueado` al controlador.
+
+### Validacion de cierre
+
+TENANT-MIN-001 queda documentada como `correcto`: Empresa A solo ve empleados de Empresa A y Empresa B solo ve empleados de Empresa B.
+
 ### Pruebas necesarias
 
-- [ ] Crear datos de dos empresas.
+- [x] Validacion estatica de sintaxis PHP.
+- [x] Preparar datos de prueba de dos empresas.
 - [ ] Verificar que un administrador solo ve empleados de su empresa.
 
 ---
@@ -429,7 +479,7 @@ Aplicar middleware/servicio de permisos por endpoint.
 ID: INC-0009
 Titulo: Creacion de avisos y partes no valida pertenencia de cliente/empleado/tarea a empresa
 Prioridad: critica
-Estado: abierta
+Estado: resuelta
 Detectado por: Codex auditor tecnico
 Fecha: 2026-05-20
 
@@ -463,10 +513,26 @@ Mezcla de datos entre empresas y fuga indirecta de informacion.
 
 Validar existencia y pertenencia de cada recurso relacionado en backend.
 
+### Correccion parcial aplicada
+
+Fase minima de PEN-0006:
+
+- `AvisoController` valida que `id_cliente`, `id_empleado` e `id_departamento`, si se reciben, pertenezcan a la empresa del token antes de crear o actualizar.
+- `ParteTrabajoController` valida que `id_cliente`, `id_tarea` e `id_empleado`, si se reciben, pertenezcan a la empresa del token antes de crear o actualizar.
+- Los JOINs de avisos y partes limitan nombres relacionados a la misma empresa.
+- No se ha creado todavia `TenantMiddleware`; queda pendiente la fase completa de tenant/multiempresa.
+
+### Validacion de cierre
+
+TENANT-MIN-003 y TENANT-MIN-004 quedan documentadas como `correcto`: las pruebas cruzadas de avisos y partes devolvieron HTTP 403 al usar recursos de otra empresa.
+
 ### Pruebas necesarias
 
+- [x] Validacion estatica de sintaxis PHP.
+- [x] Preparar datos de prueba multiempresa.
 - [ ] Intentar crear aviso con cliente de otra empresa.
 - [ ] Intentar crear parte con aviso de otra empresa.
+- [ ] Repetir con empleado/departamento/tarea de otra empresa.
 
 ---
 
@@ -521,7 +587,7 @@ Sustituir por estado `Cancelada` o campo `activo/deleted_at`, con auditoria.
 ID: INC-0011
 Titulo: Frontend envia `id_empresa: 1` en formularios
 Prioridad: critica
-Estado: abierta
+Estado: resuelta
 Detectado por: Codex auditor tecnico
 Fecha: 2026-05-20
 
@@ -555,8 +621,19 @@ Confusion de seguridad, datos hardcodeados y riesgo futuro si algun endpoint con
 
 Eliminar `id_empresa` de formularios y resolver empresa solo desde backend/contexto validado.
 
+### Correccion aplicada
+
+Se elimina `id_empresa` de los formularios de avisos y administracion. El frontend deja de enviar `id_empresa: 1` como autoridad de negocio; backend conserva la resolucion desde el token.
+
+### Validacion de cierre
+
+TENANT-MIN-005 queda documentada como `correcto`: login, dashboard, clientes, avisos, partes y administracion siguen funcionando sin enviar `id_empresa` desde frontend.
+
 ### Pruebas necesarias
 
+- [x] Busqueda estatica sin `id_empresa` en los formularios afectados.
+- [x] Build frontend correcto.
+- [x] Preparar datos de prueba multiempresa.
 - [ ] Crear aviso sin `id_empresa` en payload.
 - [ ] Crear empleado/usuario sin `id_empresa` en payload.
 
@@ -567,7 +644,7 @@ Eliminar `id_empresa` de formularios y resolver empresa solo desde backend/conte
 ID: INC-0012
 Titulo: URL de API hardcodeada y duplicada en servicios Angular
 Prioridad: media
-Estado: abierta
+Estado: en revision
 Detectado por: Codex auditor tecnico
 Fecha: 2026-05-20
 
@@ -605,10 +682,31 @@ Dificulta despliegue y aumenta probabilidad de errores por entorno.
 
 Centralizar API URL en configuracion/environment.
 
+### Correccion aplicada
+
+Se crea `frontend/src/app/core/config/api.config.ts` como punto unico de configuracion frontend para la URL base local:
+
+```txt
+http://localhost/easyTrabajo/backend/public/api
+```
+
+Los servicios `auth`, `admin`, `clientes`, `avisos`, `partes` y `dashboard` importan `API_BASE_URL` desde esa configuracion. No se modifican endpoints, nombres de metodos, payloads, autenticacion, permisos, CORS, backend ni base de datos.
+
+Validacion documentada en:
+
+- `AGENT/testing/frontend_api_url.md`
+
 ### Pruebas necesarias
 
-- [ ] Build con configuracion local.
-- [ ] Build con configuracion produccion.
+- [x] Revision estatica de servicios sin URL hardcodeada duplicada.
+- [x] Build con configuracion local.
+- [ ] Prueba manual de login.
+- [ ] Prueba manual de dashboard.
+- [ ] Prueba manual de clientes.
+- [ ] Prueba manual de avisos.
+- [ ] Prueba manual de partes/albaranes.
+- [ ] Prueba manual de administracion.
+- [ ] Build con configuracion produccion cuando exista configuracion de entorno productiva.
 
 ---
 

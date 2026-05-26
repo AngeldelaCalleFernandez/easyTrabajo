@@ -108,7 +108,14 @@ JWT_REFRESH_EXPIRES_IN=604800
 PASSWORD_HASH_ALGO=argon2id
 ```
 
-Pendiente:
+Estado actual:
+
+- EasyParte mantiene autenticación con JWT Bearer por compatibilidad con el frontend actual.
+- `JWT_SECRET` es obligatorio fuera de `local`, `development`, `dev` y `testing`.
+- El secreto debe definirse en `.env` o en variables reales del entorno.
+- No guardar tokens completos ni secretos en logs o documentación.
+
+Decisión futura:
 
 Si se usa cookie HttpOnly:
 
@@ -125,7 +132,8 @@ Reglas:
 - `JWT_SECRET` debe ser largo y aleatorio;
 - no debe estar en Git;
 - no debe compartirse entre entornos;
-- producción debe tener su propio secreto.
+- producción debe tener su propio secreto;
+- la migración a cookie HttpOnly debe abordarse en una tarea separada.
 
 ---
 

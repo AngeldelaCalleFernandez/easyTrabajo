@@ -1,19 +1,11 @@
 <?php
+require_once __DIR__ . '/env.php';
+
 class Database {
     public $conn;
 
     private function env($key, $default = null) {
-        $value = getenv($key);
-
-        if ($value === false && isset($_ENV[$key])) {
-            $value = $_ENV[$key];
-        }
-
-        if ($value === false && isset($_SERVER[$key])) {
-            $value = $_SERVER[$key];
-        }
-
-        return ($value === false || $value === '') ? $default : $value;
+        return easyparte_env($key, $default);
     }
 
     private function isLocalEnv() {

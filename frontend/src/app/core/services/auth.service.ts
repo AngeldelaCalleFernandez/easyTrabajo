@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { Usuario } from '../interfaces/auth.interfaces';
+import { API_BASE_URL } from '../config/api.config';
 
 @Injectable({
   providedIn: 'root'
@@ -13,7 +14,7 @@ export class AuthService {
 
   public usuarioActual = signal<Usuario | null>(null);
 
-  private apiUrl = 'http://localhost/easyTrabajo/backend/public/api';
+  private apiUrl = API_BASE_URL;
 
   constructor() {
     // Recuperamos al recargar

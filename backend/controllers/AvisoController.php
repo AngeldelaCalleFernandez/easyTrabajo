@@ -10,6 +10,54 @@ class AvisoController
         $this->conn = $db;
     }
 
+    private function belongsToEmpresa($table, $idField, $id, $idEmpresa, $activeField = null)
+    {
+        if ($id === null || $id === '') {
+            return true;
+        }
+
+        $allowedTables = ['cliente', 'empleado', 'departamento'];
+        if (!in_array($table, $allowedTables, true)) {
+            return false;
+        }
+
+        $query = "SELECT COUNT(*) FROM " . $table . " WHERE " . $idField . " = :id AND id_empresa = :id_empresa";
+        if ($activeField !== null) {
+            $query .= " AND " . $activeField . " = 1";
+        }
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute([
+            'id' => $id,
+            'id_empresa' => $idEmpresa
+        ]);
+
+        return (int)$stmt->fetchColumn() > 0;
+    }
+
+    private function validateRelatedIds($idCliente, $idEmpleado, $idDepartamento, $idEmpresa)
+    {
+        if (!$this->belongsToEmpresa('cliente', 'id_cliente', $idCliente, $idEmpresa)) {
+            return false;
+        }
+
+        if (!$this->belongsToEmpresa('empleado', 'id_empleado', $idEmpleado, $idEmpresa)) {
+            return false;
+        }
+
+        if (!$this->belongsToEmpresa('departamento', 'id_departamento', $idDepartamento, $idEmpresa)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private function denyForeignRelation()
+    {
+        http_response_code(403);
+        echo json_encode(["error" => "No tienes permisos para usar uno de los recursos relacionados."]);
+    }
+
     // CARGAR AVISOS 
     public function getAll($usuarioLogueado)
     {
@@ -19,8 +67,8 @@ class AvisoController
                     c.nombre as cliente_nombre,
                     CONCAT(e.nombre, ' ', e.apellido) as tecnico_nombre
                   FROM " . $this->tabla . " a
-                  LEFT JOIN cliente c ON a.id_cliente = c.id_cliente
-                  LEFT JOIN empleado e ON a.id_empleado = e.id_empleado
+                  LEFT JOIN cliente c ON a.id_cliente = c.id_cliente AND c.id_empresa = a.id_empresa
+                  LEFT JOIN empleado e ON a.id_empleado = e.id_empleado AND e.id_empresa = a.id_empresa
                   WHERE a.id_empresa = :id_empresa ";
         
         // Si es Técnico, solo ve sus avisos o los que no tienen nadie asignado
@@ -53,11 +101,19 @@ class AvisoController
             return;
         }
 
+        $id_empleado = !empty($data->id_empleado) ? $data->id_empleado : null;
+        $id_departamento = !empty($data->id_departamento) ? $data->id_departamento : null;
+
+        if (!$this->validateRelatedIds($data->id_cliente, $id_empleado, $id_departamento, $usuarioLogueado->id_empresa)) {
+            $this->denyForeignRelation();
+            return;
+        }
+
         $query = "INSERT INTO " . $this->tabla . " 
                   (descripcion, importancia, estado, persona_contacto, telefono_contacto, 
-                   id_empleado, id_cliente, id_empresa, id_usuario_creador, fecha_alta) 
+                   id_empleado, id_cliente, id_departamento, id_empresa, id_usuario_creador, fecha_alta) 
                   VALUES (:descripcion, :importancia, :estado, :persona_contacto, :telefono_contacto, 
-                          :id_empleado, :id_cliente, :id_empresa, :id_usuario_creador, NOW())";
+                          :id_empleado, :id_cliente, :id_departamento, :id_empresa, :id_usuario_creador, NOW())";
 
         $stmt = $this->conn->prepare($query);
 
@@ -66,8 +122,6 @@ class AvisoController
         $estado = !empty($data->estado) ? $data->estado : 'Pendiente';
         $persona_contacto = !empty($data->persona_contacto) ? $data->persona_contacto : null;
         $telefono_contacto = !empty($data->telefono_contacto) ? $data->telefono_contacto : null;
-        $id_empleado = !empty($data->id_empleado) ? $data->id_empleado : null;
-
         // BIND DE DATOS DEL FORMULARIO
         $stmt->bindParam(":descripcion", $data->descripcion);
         $stmt->bindParam(":importancia", $importancia);
@@ -76,6 +130,7 @@ class AvisoController
         $stmt->bindParam(":telefono_contacto", $telefono_contacto);
         $stmt->bindParam(":id_empleado", $id_empleado);
         $stmt->bindParam(":id_cliente", $data->id_cliente);
+        $stmt->bindParam(":id_departamento", $id_departamento);
 
         // BIND DE DATOS DEL TOKEN 
         $stmt->bindParam(":id_empresa", $usuarioLogueado->id_empresa);
@@ -117,8 +172,14 @@ class AvisoController
         $estado = isset($data->estado) ? $data->estado : $actual['estado'];
         $persona_contacto = property_exists($data, 'persona_contacto') ? $data->persona_contacto : $actual['persona_contacto'];
         $telefono_contacto = property_exists($data, 'telefono_contacto') ? $data->telefono_contacto : $actual['telefono_contacto'];
-        $id_empleado = property_exists($data, 'id_empleado') ? $data->id_empleado : $actual['id_empleado'];
+        $id_empleado = property_exists($data, 'id_empleado') ? (!empty($data->id_empleado) ? $data->id_empleado : null) : $actual['id_empleado'];
         $id_cliente = isset($data->id_cliente) ? $data->id_cliente : $actual['id_cliente'];
+        $id_departamento = property_exists($data, 'id_departamento') ? (!empty($data->id_departamento) ? $data->id_departamento : null) : $actual['id_departamento'];
+
+        if (!$this->validateRelatedIds($id_cliente, $id_empleado, $id_departamento, $usuarioLogueado->id_empresa)) {
+            $this->denyForeignRelation();
+            return;
+        }
 
         // Control de fecha de fin
         $fecha_fin = $actual['fecha_fin'];
@@ -131,7 +192,7 @@ class AvisoController
         $query = "UPDATE " . $this->tabla . " 
                   SET descripcion=:descripcion, importancia=:importancia, estado=:estado, 
                       persona_contacto=:persona_contacto, telefono_contacto=:telefono_contacto, 
-                      id_empleado=:id_empleado, id_cliente=:id_cliente, fecha_fin=:fecha_fin 
+                      id_empleado=:id_empleado, id_cliente=:id_cliente, id_departamento=:id_departamento, fecha_fin=:fecha_fin 
                   WHERE id_tarea = :id AND id_empresa = :id_empresa";
 
         $stmt = $this->conn->prepare($query);
@@ -142,6 +203,7 @@ class AvisoController
         $stmt->bindParam(":telefono_contacto", $telefono_contacto);
         $stmt->bindParam(":id_empleado", $id_empleado);
         $stmt->bindParam(":id_cliente", $id_cliente);
+        $stmt->bindParam(":id_departamento", $id_departamento);
         $stmt->bindParam(":fecha_fin", $fecha_fin);
         $stmt->bindParam(":id", $id);
         $stmt->bindParam(":id_empresa", $usuarioLogueado->id_empresa);

@@ -159,6 +159,15 @@ Ejemplo:
 
 Nunca se deben copiar secretos de producción al entorno local.
 
+Estado actual de carga:
+
+- El backend carga variables desde `.env` en la raiz del repositorio o desde `backend/.env`.
+- `.env` y `backend/.env` no deben subirse a Git.
+- `.env.example` sirve como plantilla sin secretos reales.
+- `backend/public/.htaccess` debe quedar para rewrite/configuracion minima, no como fuente principal de secretos.
+- En `production`, `JWT_SECRET` es obligatorio.
+- En `production`, no usar `DB_USER=root`; se debe configurar un usuario MySQL con permisos minimos.
+
 ---
 
 ## 8. Base de datos por entorno

@@ -41,8 +41,7 @@ export default class Avisos implements OnInit {
     id_cliente: [null as number | null, [Validators.required]],
     persona_contacto: [''],
     telefono_contacto: [''],
-    id_empleado: [null],
-    id_empresa: [1, [Validators.required]]
+    id_empleado: [null]
   });
 
   ngOnInit() {
@@ -75,8 +74,7 @@ export default class Avisos implements OnInit {
       id_cliente: tarea.id_cliente,
       persona_contacto: tarea.persona_contacto,
       telefono_contacto: tarea.telefono_contacto,
-      id_empleado: tarea.id_empleado,
-      id_empresa: tarea.id_empresa
+      id_empleado: tarea.id_empleado
     });
     this.mostrarFormulario.set(true);
   }
@@ -84,7 +82,7 @@ export default class Avisos implements OnInit {
   toggleFormulario() {
     this.mostrarFormulario.update(valor => !valor);
     if (!this.mostrarFormulario()) {
-      this.avisoForm.reset({ importancia: 'Normal', id_empresa: 1, id_cliente: null, id_empleado: null });
+      this.avisoForm.reset({ importancia: 'Normal', id_cliente: null, id_empleado: null });
       this.idAvisoEditando.set(null);
     }
   }
