@@ -58,6 +58,43 @@ class ParteTrabajoController
         echo json_encode(["error" => "No tienes permisos para usar uno de los recursos relacionados."]);
     }
 
+    private function userHasRole($usuarioLogueado, array $rolesPermitidos)
+    {
+        $rol = isset($usuarioLogueado->rol_nombre) ? $usuarioLogueado->rol_nombre : '';
+        return in_array($rol, $rolesPermitidos, true);
+    }
+
+    private function isTecnico($usuarioLogueado)
+    {
+        return $this->userHasRole($usuarioLogueado, ['Tecnico', 'TÃ©cnico', 'TÃƒÂ©cnico']);
+    }
+
+    private function denyPermission($message = "No tienes permisos para realizar esta accion.")
+    {
+        http_response_code(403);
+        echo json_encode(["error" => $message]);
+    }
+
+    private function tareaAsignadaAlTecnico($idTarea, $idEmpleado, $idEmpresa)
+    {
+        if ($idTarea === null || $idTarea === '') {
+            return true;
+        }
+
+        $query = "SELECT COUNT(*) FROM tarea
+                  WHERE id_tarea = :id_tarea
+                    AND id_empresa = :id_empresa
+                    AND id_empleado = :id_empleado";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute([
+            'id_tarea' => $idTarea,
+            'id_empresa' => $idEmpresa,
+            'id_empleado' => $idEmpleado
+        ]);
+
+        return (int)$stmt->fetchColumn() > 0;
+    }
+
     // OBTENER TODOS LOS PARTES
     public function getAll($usuarioLogueado)
     {
@@ -70,7 +107,7 @@ class ParteTrabajoController
                   LEFT JOIN empleado e ON p.id_empleado = e.id_empleado AND e.id_empresa = p.id_empresa
                   WHERE p.id_empresa = :id_empresa AND p.activo = 1";
 
-        if ($usuarioLogueado->rol_nombre === 'Técnico') {
+        if ($this->isTecnico($usuarioLogueado)) {
             $query .= " AND p.id_empleado = :id_empleado";
         }
 
@@ -79,7 +116,7 @@ class ParteTrabajoController
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(":id_empresa", $usuarioLogueado->id_empresa);
 
-        if ($usuarioLogueado->rol_nombre === 'Técnico') {
+        if ($this->isTecnico($usuarioLogueado)) {
             $stmt->bindParam(":id_empleado", $usuarioLogueado->id_empleado);
         }
 
@@ -107,10 +144,19 @@ class ParteTrabajoController
 
         $id_tarea = !empty($data->id_tarea) ? $data->id_tarea : null;
 
-        if ($usuarioLogueado->rol_nombre === 'Técnico') {
+        if ($this->isTecnico($usuarioLogueado)) {
             if (empty($usuarioLogueado->id_empleado)) {
-                http_response_code(403);
-                echo json_encode(["error" => "No tienes permisos para crear este parte."]);
+                $this->denyPermission("No tienes permisos para crear este parte.");
+                return;
+            }
+
+            if (!empty($data->id_empleado) && (int)$data->id_empleado !== (int)$usuarioLogueado->id_empleado) {
+                $this->denyPermission("No tienes permisos para crear este parte.");
+                return;
+            }
+
+            if (!$this->tareaAsignadaAlTecnico($id_tarea, $usuarioLogueado->id_empleado, $usuarioLogueado->id_empresa)) {
+                $this->denyPermission("No tienes permisos para crear este parte.");
                 return;
             }
 
@@ -165,9 +211,8 @@ class ParteTrabajoController
 
             $parteActual = $stmt_check->fetch(PDO::FETCH_ASSOC);
 
-            if ($usuarioLogueado->rol_nombre === 'Técnico' && $parteActual['id_empleado'] != $usuarioLogueado->id_empleado) {
-                http_response_code(403);
-                echo json_encode(["error" => "No tienes permisos para actualizar este parte."]);
+            if ($this->isTecnico($usuarioLogueado) && $parteActual['id_empleado'] != $usuarioLogueado->id_empleado) {
+                $this->denyPermission("No tienes permisos para actualizar este parte.");
                 return;
             }
 
@@ -181,6 +226,11 @@ class ParteTrabajoController
             $id_cliente_validar = property_exists($data, 'id_cliente') ? $data->id_cliente : $parteActual['id_cliente'];
             $id_tarea_validar = property_exists($data, 'id_tarea') ? $data->id_tarea : $parteActual['id_tarea'];
             $id_empleado_validar = property_exists($data, 'id_empleado') ? $data->id_empleado : $parteActual['id_empleado'];
+
+            if ($this->isTecnico($usuarioLogueado) && (int)$id_empleado_validar !== (int)$usuarioLogueado->id_empleado) {
+                $this->denyPermission("No tienes permisos para actualizar este parte.");
+                return;
+            }
 
             if (!$this->validateRelatedIds($id_cliente_validar, $id_tarea_validar, $id_empleado_validar, $usuarioLogueado->id_empresa)) {
                 $this->denyForeignRelation();

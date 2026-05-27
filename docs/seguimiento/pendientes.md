@@ -209,7 +209,7 @@ Mantener JWT Bearer por compatibilidad actual. Evaluar cookie HttpOnly en una ta
 
 Tipo: seguridad
 Prioridad: critica
-Estado: pendiente
+Estado: parcial
 Relacionado con: INC-0005, INC-0006, INC-0008
 Detectado por: Codex auditor tecnico
 Fecha: 2026-05-20
@@ -231,9 +231,24 @@ Actualmente solo hay `AuthMiddleware` y comprobaciones manuales parciales.
 ### Criterios de aceptacion
 
 - [ ] `RoleMiddleware` o servicio equivalente.
-- [ ] Endpoints documentan roles permitidos.
+- [x] Matriz minima de permisos backend documentada sobre roles actuales.
+- [x] Primera comprobacion minima de roles aplicada en `/api/clientes`.
+- [x] Pruebas manuales de permisos de clientes documentadas.
+- [x] Primera cancelacion segura de avisos implementada sin borrado fisico.
+- [x] Ajuste backend para que `Tecnico` pueda listar clientes sin crear/editar/baja.
+- [x] Ajuste backend para que `Tecnico` pueda crear avisos libres o asignados a si mismo, nunca a otro tecnico.
+- [x] Ajuste backend para que `Atencion al Cliente` y `Tecnico` puedan entrar por `POST /api/avisos` segun la regla vigente.
+- [x] Ajuste backend para que `Atencion al Cliente` pueda listar empleados activos de su empresa como solo lectura para asignar avisos.
+- [ ] Pruebas manuales de cancelacion de avisos documentadas como correctas.
+- [ ] Revalidar permisos de clientes tras decision de lectura para `Tecnico`.
+- [ ] Revalidar visibilidad y creacion de avisos por rol.
+- [x] Ajustar template de avisos para mostrar boton Cancelar segun `puedeCancelarAviso(tarea)`.
+- [ ] Validar manualmente boton Cancelar por rol y aviso asignado.
+- [ ] Revalidar selector de empleados en avisos para `Atencion al Cliente`.
+- [ ] Revalidar que `Atencion al Cliente` no puede crear, editar ni dar de baja empleados.
+- [ ] Endpoints restantes documentan roles permitidos en codigo/rutas.
 - [ ] Clientes, avisos, partes y administracion validan permisos en backend.
-- [ ] Pruebas negativas por rol.
+- [ ] Pruebas negativas por rol en los modulos restantes.
 
 ### Riesgos
 
@@ -241,7 +256,7 @@ Alto. Puede cambiar acceso a modulos existentes.
 
 ### Siguiente paso
 
-Disenar matriz minima sobre roles actuales antes de migrar a roles objetivo.
+Ejecutar las pruebas manuales actualizadas de `docs/testing/clientes_permisos.md` y `docs/testing/avisos_cancelacion.md`, incluyendo la visibilidad del boton Cancelar por rol. PEN-0005 sigue parcial porque faltan validaciones completas de avisos, partes, administracion y/o un servicio/middleware centralizado.
 
 ---
 

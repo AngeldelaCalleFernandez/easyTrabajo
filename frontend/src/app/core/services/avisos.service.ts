@@ -63,8 +63,15 @@ export class TareasService {
     await this.actualizarTarea(idTarea,{estado: 'Finalizada'});
   }
 
-  async cancelarTarea(idTarea:number){
-    await this.actualizarTarea(idTarea,{estado:'Cancelada'});
+  async cancelarTarea(idTarea:number): Promise<boolean>{
+    try {
+      await firstValueFrom(this.http.put(`${this.apiUrl}/avisos/${idTarea}/cancelar`, {}));
+      this.cargarTareas();
+      return true;
+    } catch (error) {
+      console.error("Error al cancelar la tarea:", error);
+      return false;
+    }
   }
 
   //ELIMINAR TAREA

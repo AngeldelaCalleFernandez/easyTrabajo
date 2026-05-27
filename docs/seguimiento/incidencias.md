@@ -433,7 +433,7 @@ TENANT-MIN-001 queda documentada como `correcto`: Empresa A solo ve empleados de
 ID: INC-0008
 Titulo: Endpoints de clientes no validan rol en backend
 Prioridad: alta
-Estado: abierta
+Estado: resuelta
 Detectado por: Codex auditor tecnico
 Fecha: 2026-05-20
 
@@ -467,10 +467,51 @@ Tecnicos o usuarios no autorizados podrian modificar clientes.
 
 Aplicar middleware/servicio de permisos por endpoint.
 
+### Preparacion documental
+
+Se prepara la matriz minima de permisos backend en `docs/contexto/matriz_permisos_backend.md` usando los roles actuales reales:
+
+- `Administrador`
+- `Atencion al Cliente`
+- `Tecnico`
+
+INC-0008 no queda resuelta hasta implementar la autorizacion backend y ejecutar pruebas negativas por rol.
+
+### Correccion aplicada
+
+Primera fase minima de PEN-0005:
+
+- `backend/routes/api.php` comprueba el rol autenticado antes de ejecutar acciones sobre `/api/clientes`.
+- `Administrador` mantiene `GET`, `POST`, `PUT` y `DELETE`.
+- `Atencion al Cliente` puede ejecutar `GET`, `POST`, `PUT` y `DELETE`; `DELETE` es baja logica (`activo = 0`), no borrado fisico.
+- Decision revisada 2026-05-27: `Tecnico` puede ejecutar `GET` para listar/ver clientes de su empresa, pero recibe 403 en `POST`, `PUT` y `DELETE`.
+- El rol se toma del token/contexto autenticado; no se acepta rol enviado por frontend.
+- El filtrado por `id_empresa` existente en clientes se mantiene sin cambios.
+- No se modifica frontend, base de datos, login, JWT, CORS ni estructura de roles.
+
+Validacion documentada en:
+
+- `docs/testing/clientes_permisos.md`
+
 ### Pruebas necesarias
 
-- [ ] Crear/editar cliente como tecnico.
-- [ ] Validar respuesta 403.
+- [x] Crear/editar cliente como tecnico.
+- [x] Validar respuesta 403.
+- [x] Baja de cliente como tecnico debe devolver 403.
+- [x] Baja logica de cliente como Atencion al Cliente debe funcionar.
+- [x] Crear/editar cliente como Atencion al Cliente debe seguir funcionando.
+- [x] CRUD completo de clientes como Administrador debe seguir funcionando.
+- [x] Regresion local de login, dashboard, avisos y partes.
+
+### Validacion de cierre previa
+
+La persona responsable del proyecto reviso manualmente la primera fase de permisos de clientes. La decision funcional final permite a `Atencion al Cliente` dar de baja clientes porque la accion actual es baja logica (`activo = 0`). `Tecnico` sigue bloqueado para listar, crear, editar y dar de baja clientes. `Administrador` mantiene CRUD completo.
+
+Resultados registrados en `docs/testing/clientes_permisos.md`. No se documentaron tokens ni contrasenas.
+
+### Ajuste funcional 2026-05-27
+
+Durante pruebas manuales se decide que `Tecnico` si debe poder listar/ver clientes para su flujo operativo, pero no crear, editar ni dar de baja. INC-0008 queda `en revision` hasta repetir la prueba `GET /api/clientes` con token `Tecnico` y confirmar que `POST`, `PUT` y `DELETE` siguen devolviendo 403.
 
 ---
 
@@ -541,7 +582,7 @@ TENANT-MIN-003 y TENANT-MIN-004 quedan documentadas como `correcto`: las pruebas
 ID: INC-0010
 Titulo: Borrado fisico de avisos
 Prioridad: alta
-Estado: abierta
+Estado: resuelta
 Detectado por: Codex auditor tecnico
 Fecha: 2026-05-20
 
@@ -556,11 +597,14 @@ Fecha: 2026-05-20
 
 ### Resultado esperado
 
-Cancelar o baja logica con trazabilidad.
+Separar dos acciones distintas:
+
+- Cancelar aviso: cambiar el estado a `Cancelada` y conservar trazabilidad.
+- Borrar aviso fisicamente: permitirlo solo si el aviso ya esta cancelado y el rol tiene permiso.
 
 ### Resultado actual
 
-El aviso se elimina fisicamente.
+El aviso se elimina fisicamente desde `AvisoController::delete()` mediante `DELETE FROM tarea`, sin distinguir cancelacion de borrado fisico definitivo.
 
 ### Archivos o zonas afectadas
 
@@ -573,12 +617,66 @@ Perdida de trazabilidad y posible ruptura de referencias.
 
 ### Propuesta de solucion
 
-Sustituir por estado `Cancelada` o campo `activo/deleted_at`, con auditoria.
+- Implementar una accion de cancelacion que conserve el aviso y registre el estado `Cancelada`.
+- Permitir cancelar cualquier aviso de su empresa a `Administrador`.
+- Permitir cancelar cualquier aviso de su empresa a `Atencion al Cliente`.
+- Permitir cancelacion por `Tecnico` solo sobre avisos asignados a el.
+- Bloquear cancelacion por `Tecnico` de avisos sin asignar o asignados a otros tecnicos.
+- No permitir borrado fisico a `Tecnico`.
+- Permitir borrado fisico a `Administrador` y `Atencion al Cliente` solo si el aviso ya esta en estado `Cancelada`.
+- Bloquear siempre el borrado fisico de avisos que no esten cancelados.
+
+### Correccion parcial aplicada
+
+Primera fase de PEN-0005 para avisos:
+
+- Se anade `PUT /api/avisos/{id}/cancelar` para cancelar avisos sin borrado fisico.
+- Si `PUT /api/avisos/{id}` recibe `estado = Cancelada`, reutiliza la misma validacion de cancelacion segura.
+- La cancelacion actualiza `estado` a `Cancelada` y establece `fecha_fin`.
+- `Administrador` y `Atencion al Cliente` pueden cancelar avisos de su empresa.
+- `Tecnico` solo puede cancelar avisos asignados a su `id_empleado`.
+- `Tecnico` recibe 403 al intentar cancelar avisos sin asignar o asignados a otros tecnicos.
+- `DELETE /api/avisos/{id}` queda bloqueado con 403 generico en esta fase para evitar borrado fisico.
+- Ajuste 2026-05-27: `Atencion al Cliente` debe ver todos los avisos de su empresa.
+- Ajuste 2026-05-27: `Administrador`, `Atencion al Cliente` y `Tecnico` quedan permitidos explicitamente en `POST /api/avisos`.
+- Ajuste 2026-05-27: `Tecnico` puede crear avisos libres o asignados a su propio `id_empleado`; el backend impide asignarlos a otro tecnico.
+- Ajuste 2026-05-27: `Tecnico` tampoco puede reasignar un aviso a otro tecnico mediante `PUT /api/avisos/{id}`.
+- Ajuste 2026-05-27: el servicio frontend de avisos llama a `PUT /api/avisos/{id}/cancelar` para cancelar.
+- Ajuste 2026-05-27: la cancelacion backend acepta variantes reales de `Atencion al Cliente` para permitir cancelar avisos de su empresa.
+- Ajuste 2026-05-27: `GET /api/empleados` permite lectura a `Atencion al Cliente`, siempre filtrada por `id_empresa`, para poder asignar avisos desde el formulario. `POST`, `PUT` y `DELETE` de empleados siguen limitados a `Administrador`.
+- Ajuste 2026-05-27: `frontend/src/app/features/avisos/avisos.html` muestra el boton Cancelar usando `puedeCancelarAviso(tarea)`, sin cambiar la llamada a `PUT /api/avisos/{id}/cancelar`.
+- Ajuste 2026-05-27: se endurece la comprobacion de rol de lectura de empleados para tolerar variantes con acentos/codificacion en `Atencion al Cliente`, sin permitir lectura a `Tecnico`.
+- Ajuste 2026-05-27: el formulario de aviso ya no autoasigna siempre al tecnico; permite dejar el aviso libre o elegir solo su propio empleado.
+- No se modifica base de datos, login, JWT, CORS ni estructura de roles.
+
+Validacion documentada en:
+
+- `docs/testing/avisos_cancelacion.md`
 
 ### Pruebas necesarias
 
-- [ ] Cancelar aviso con parte asociado.
-- [ ] Verificar trazabilidad y ausencia de borrado fisico.
+- [x] Cancelar aviso como Administrador.
+- [x] Cancelar aviso como Atencion al Cliente.
+- [x] Cancelar aviso asignado al propio Tecnico.
+- [x] Bloquear cancelacion como Tecnico de aviso sin asignar.
+- [x] Bloquear cancelacion como Tecnico de aviso asignado a otro tecnico.
+- [x] Bloquear borrado fisico como Tecnico.
+- [x] Bloquear borrado fisico de aviso no cancelado.
+- [x] Permitir borrado fisico solo si estado = `Cancelada` y rol permitido.
+- [x] Verificar trazabilidad y ausencia de borrado fisico durante la cancelacion.
+- [x] Verificar que `PUT /api/avisos/{id}` con `estado = Cancelada` no permite saltarse permisos.
+- [x] Verificar que Atencion al Cliente lista avisos de su empresa.
+- [x] Verificar que Atencion al Cliente puede crear aviso tras ajuste de ruta.
+- [x] Verificar que Tecnico puede crear aviso libre sin `id_empleado`.
+- [x] Verificar que Tecnico puede crear aviso asignado a si mismo.
+- [x] Verificar que Tecnico no puede crear aviso asignado a otro tecnico tras ajuste de ruta.
+- [x] Verificar que Tecnico no puede reasignar aviso a otro tecnico.
+- [x] Verificar boton Cancelar para Atencion al Cliente en avisos no cancelados.
+- [x] Ajustar boton Cancelar para que use `puedeCancelarAviso(tarea)` en el template.
+- [x] Validar boton Cancelar para Tecnico solo en avisos asignados a el.
+- [x] Verificar que Atencion al Cliente puede listar empleados activos de su empresa para asignar avisos.
+- [x] Verificar que Atencion al Cliente no puede crear, editar ni dar de baja empleados.
+- [x] Verificar que Tecnico recibe 403 en `GET /api/empleados`.
 
 ---
 

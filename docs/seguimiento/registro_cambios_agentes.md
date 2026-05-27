@@ -330,3 +330,278 @@ Pruebas realizadas: Pruebas manuales ejecutadas por la persona responsable del p
 Riesgos: No se ha definido todavia una configuracion frontend productiva por entorno; la URL local queda centralizada y preparada para esa evolucion.
 Estado: pendiente de revision
 Siguiente paso: Definir configuracion frontend productiva cuando se prepare despliegue fuera de XAMPP/local.
+
+---
+
+## CAMBIO-0015 - Matriz minima de permisos backend
+
+Fecha: 2026-05-26
+Agente: Codex / agente backend-auditor EasyParte
+Rama: security/tenant-minimo
+Tipo de cambio: seguridad/documentacion
+Resumen: Se disena una matriz minima de autorizacion backend usando los roles actuales reales (`Administrador`, `Atencion al Cliente`, `Tecnico`) y se diferencia entre permisos actuales detectados, permisos recomendados para PEN-0005 y roles objetivo futuros.
+Archivos modificados:
+- `docs/contexto/matriz_permisos_backend.md`
+- `docs/seguimiento/incidencias.md`
+- `docs/seguimiento/pendientes.md`
+- `docs/seguimiento/registro_cambios_agentes.md`
+
+Motivo: Preparar PEN-0005 antes de implementar cambios, especialmente para corregir INC-0008 en una tarea pequena posterior.
+Pruebas realizadas: Revision documental y estatica en modo solo lectura de `backend/routes/api.php`, `AuthMiddleware`, controladores de clientes, avisos, partes, empleados, usuarios, roles y dashboard, modelos de cliente/usuario y roles definidos en `bbdd/export_base_datos.sql`. No se modifico codigo, frontend ni base de datos.
+Riesgos: La matriz es una propuesta previa; no aplica permisos por si misma. INC-0008 sigue sin corregir hasta implementar comprobaciones backend y ejecutar pruebas negativas por rol.
+Estado: pendiente de revision
+Siguiente paso: Implementar comprobacion minima de roles para `/api/clientes` y validar que Tecnico no puede crear, editar ni dar de baja clientes.
+
+---
+
+## CAMBIO-0016 - Control minimo de roles en clientes
+
+Fecha: 2026-05-26
+Agente: Codex / agente backend EasyParte
+Rama: security/clientes-role-check
+Tipo de cambio: seguridad/backend
+Resumen: Se aplica una validacion minima de roles en `backend/routes/api.php` para `/api/clientes`, usando el rol del usuario autenticado y sin modificar controladores, frontend, base de datos, login, JWT ni CORS.
+Archivos modificados:
+- `backend/routes/api.php`
+- `docs/testing/clientes_permisos.md`
+- `docs/seguimiento/incidencias.md`
+- `docs/seguimiento/pendientes.md`
+- `docs/seguimiento/registro_cambios_agentes.md`
+
+Motivo: Corregir la primera fase de INC-0008 evitando que cualquier usuario autenticado pueda crear, editar o dar de baja clientes.
+Pruebas realizadas: Validacion estatica con `php -l backend/routes/api.php`. Se documentan pruebas manuales pendientes en `docs/testing/clientes_permisos.md`; no se documentan tokens ni contrasenas.
+Riesgos: `Tecnico` queda bloqueado tambien en `GET /api/clientes` por decision de esta fase; si algun flujo tecnico dependia de listar clientes directamente, debera ajustarse con una decision funcional explicita. PEN-0005 sigue parcial porque no existe aun autorizacion centralizada completa.
+Estado: pendiente de revision
+Siguiente paso: Ejecutar pruebas manuales de permisos de clientes y regresion de login, dashboard, avisos y partes.
+
+---
+
+## CAMBIO-0017 - Decision funcional de baja logica de clientes
+
+Fecha: 2026-05-26
+Agente: Codex / agente backend-auditor documental EasyParte
+Rama: security/clientes-role-check
+Tipo de cambio: seguridad/backend/documentacion
+Resumen: Se ajusta la validacion minima de `/api/clientes` para permitir a `Atencion al Cliente` ejecutar `DELETE /api/clientes/{id}` como baja logica, manteniendo bloqueado a `Tecnico` y conservando CRUD completo para `Administrador`.
+Archivos modificados:
+- `backend/routes/api.php`
+- `docs/contexto/matriz_permisos_backend.md`
+- `docs/testing/clientes_permisos.md`
+- `docs/seguimiento/incidencias.md`
+- `docs/seguimiento/pendientes.md`
+- `docs/seguimiento/registro_cambios_agentes.md`
+
+Motivo: Registrar la decision funcional revisada: la baja de cliente actual cambia `activo` de 1 a 0 y no realiza borrado fisico, por lo que `Atencion al Cliente` puede ejecutarla.
+Pruebas realizadas: Validacion estatica con `php -l backend/routes/api.php`. Las pruebas manuales de permisos de clientes fueron ejecutadas por la persona responsable del proyecto y Codex solo registra los resultados aportados. No se documentaron tokens ni contrasenas.
+Riesgos: PEN-0005 sigue parcial porque aun faltan permisos en avisos, partes, administracion o un middleware/servicio centralizado de autorizacion.
+Estado: pendiente de revision
+Siguiente paso: Continuar la autorizacion backend minima en los modulos pendientes sin migrar todavia al modelo objetivo de roles.
+
+---
+
+## CAMBIO-0018 - Decision funcional sobre cancelacion y borrado de avisos
+
+Fecha: 2026-05-26
+Agente: Codex / agente backend-auditor documental EasyParte
+Rama: security/clientes-role-check
+Tipo de cambio: seguridad/documentacion
+Resumen: Se documenta la decision funcional de separar cancelacion de aviso y borrado fisico de aviso antes de implementar permisos de avisos.
+Archivos modificados:
+- `docs/contexto/matriz_permisos_backend.md`
+- `docs/seguimiento/incidencias.md`
+- `docs/seguimiento/pendientes.md`
+- `docs/seguimiento/registro_cambios_agentes.md`
+- `docs/contexto/dudas_pendientes.md`
+
+Motivo: Evitar mezclar cancelar con borrar fisicamente. El borrado fisico solo debera permitirse si el aviso ya esta cancelado y nunca para `Tecnico`.
+Pruebas realizadas: Revision documental. No se modifico codigo, backend, frontend, base de datos, rutas ni controladores.
+Riesgos: Duda funcional resuelta posteriormente en CAMBIO-0019: el tecnico solo puede cancelar avisos asignados a el.
+Estado: pendiente de revision
+Siguiente paso: Ver CAMBIO-0019 antes de implementar permisos de avisos.
+
+---
+
+## CAMBIO-0019 - Decision cerrada sobre cancelacion de avisos por tecnico
+
+Fecha: 2026-05-26
+Agente: Codex / agente backend-auditor documental EasyParte
+Rama: security/clientes-role-check
+Tipo de cambio: seguridad/documentacion
+Resumen: Se documenta la decision funcional cerrada: `Tecnico` solo puede cancelar avisos asignados a el, no avisos sin asignar ni asignados a otros tecnicos.
+Archivos modificados:
+- `docs/contexto/matriz_permisos_backend.md`
+- `docs/seguimiento/incidencias.md`
+- `docs/seguimiento/pendientes.md`
+- `docs/seguimiento/registro_cambios_agentes.md`
+
+Motivo: Dejar preparada la fase de permisos de avisos sin dudas sobre el alcance de cancelacion del rol `Tecnico`.
+Pruebas realizadas: Revision documental. No se modifico codigo, backend, frontend, base de datos, rutas ni controladores.
+Riesgos: En esta fase INC-0010 seguia abierta hasta implementar la separacion real entre cancelacion y borrado fisico; ver avance posterior en CAMBIO-0020.
+Estado: pendiente de revision
+Siguiente paso: Implementar permisos de avisos manteniendo `PEN-0005` como parcial hasta cubrir tambien partes, administracion o un servicio/middleware centralizado.
+
+---
+
+## CAMBIO-0020 - Cancelacion segura de avisos sin borrado fisico
+
+Fecha: 2026-05-26
+Agente: Codex / agente backend EasyParte
+Rama: security/clientes-role-check
+Tipo de cambio: seguridad/backend
+Resumen: Se anade una primera fase de cancelacion segura de avisos mediante `PUT /api/avisos/{id}/cancelar`, cambiando el estado a `Cancelada` sin eliminar fisicamente el registro, y se evita el bypass por `PUT /api/avisos/{id}` con `estado = Cancelada`.
+Archivos modificados:
+- `backend/routes/api.php`
+- `backend/controllers/AvisoController.php`
+- `docs/testing/avisos_cancelacion.md`
+- `docs/seguimiento/incidencias.md`
+- `docs/seguimiento/pendientes.md`
+- `docs/seguimiento/registro_cambios_agentes.md`
+
+Motivo: Separar la cancelacion de avisos del borrado fisico actual y evitar que `DELETE /api/avisos/{id}` elimine registros durante esta fase.
+Pruebas realizadas: Validacion estatica con `php -l backend/routes/api.php` y `php -l backend/controllers/AvisoController.php`. Se documentan pruebas manuales pendientes en `docs/testing/avisos_cancelacion.md`; no se documentan tokens ni contrasenas.
+Riesgos: INC-0010 queda en revision, no resuelta, porque falta ejecutar pruebas manuales y queda pendiente decidir o implementar el borrado fisico condicionado de avisos ya cancelados.
+Estado: pendiente de revision
+Siguiente paso: Ejecutar pruebas manuales AVISO-CAN-001 a AVISO-CAN-008 y validar que no hay borrado fisico.
+
+---
+
+## CAMBIO-0021 - Ajustes funcionales de permisos de clientes y avisos
+
+Fecha: 2026-05-27
+Agente: Codex / agente backend-frontend EasyParte
+Rama: security/clientes-role-check
+Tipo de cambio: seguridad/backend/frontend
+Resumen: Se ajustan permisos minimos tras pruebas manuales: `Tecnico` puede listar clientes, sigue bloqueado para crear/editar/baja; `Atencion al Cliente` puede ver avisos de su empresa; `Tecnico` puede crear avisos asignados a si mismo y no a otros tecnicos; tampoco puede reasignar avisos a otro tecnico por `PUT`; el servicio frontend de avisos usa `PUT /api/avisos/{id}/cancelar`.
+Archivos modificados:
+- `backend/routes/api.php`
+- `backend/controllers/AvisoController.php`
+- `frontend/src/app/features/clientes/clientes.ts`
+- `frontend/src/app/features/avisos/avisos.ts`
+- `frontend/src/app/core/services/avisos.service.ts`
+- `docs/contexto/matriz_permisos_backend.md`
+- `docs/testing/avisos_cancelacion.md`
+- `docs/testing/clientes_permisos.md`
+- `docs/seguimiento/incidencias.md`
+- `docs/seguimiento/pendientes.md`
+- `docs/seguimiento/registro_cambios_agentes.md`
+
+Motivo: Corregir ajustes funcionales detectados en pruebas manuales sin modificar base de datos, login, JWT, CORS, modelo de roles ni crear `RoleMiddleware`.
+Pruebas realizadas: `php -l backend/routes/api.php`, `php -l backend/controllers/AvisoController.php` y `npm run build` en `frontend`. Se documentan pruebas manuales pendientes; no se documentan tokens ni contrasenas.
+Riesgos: Los templates HTML de clientes y avisos contienen condiciones visuales de rol; para ocultar/mostrar botones con precision por aviso puede requerirse una tarea permitiendo editar `frontend/src/app/features/clientes/clientes.html` y `frontend/src/app/features/avisos/avisos.html`. INC-0010 sigue en revision y PEN-0005 parcial.
+Estado: pendiente de revision
+Siguiente paso: Ejecutar pruebas manuales actualizadas y permitir ajuste de templates si la visibilidad del boton Cancelar no coincide con la regla por aviso asignado.
+
+---
+
+## CAMBIO-0022 - Correccion parcial de cancelacion de avisos por rol
+
+Fecha: 2026-05-27
+Agente: Codex / agente backend-frontend EasyParte
+Rama: security/clientes-role-check
+Tipo de cambio: seguridad/backend/frontend
+Resumen: Se ajusta la cancelacion backend para que `Atencion al Cliente` pueda cancelar avisos de su empresa aunque el rol llegue con variante acentuada. Se mantiene la llamada frontend a `PUT /api/avisos/{id}/cancelar` y la validacion TS de permisos antes de cancelar.
+Archivos modificados:
+- `backend/controllers/AvisoController.php`
+- `docs/testing/avisos_cancelacion.md`
+- `docs/seguimiento/incidencias.md`
+- `docs/seguimiento/pendientes.md`
+- `docs/seguimiento/registro_cambios_agentes.md`
+
+Motivo: Corregir el bloqueo de cancelacion para `Atencion al Cliente` detectado en pruebas manuales, sin modificar base de datos, login, JWT, CORS, modelo de roles ni implementar borrado fisico condicionado.
+Pruebas realizadas: `php -l backend/controllers/AvisoController.php`, `php -l backend/routes/api.php` y `npm run build` en `frontend`. No se documentan tokens ni contrasenas.
+Riesgos: El boton de cancelacion de `Tecnico` depende del template `frontend/src/app/features/avisos/avisos.html`, que no estaba permitido en esta tarea. La accion TS sigue protegida, pero la visibilidad exacta del boton requiere permitir ese archivo.
+Estado: pendiente de revision
+Siguiente paso: Permitir ajuste de `frontend/src/app/features/avisos/avisos.html` para mostrar el boton Cancelar solo cuando `puedeCancelarAviso(tarea)` sea verdadero.
+
+---
+
+## CAMBIO-0023 - Permisos explicitos de creacion de avisos
+
+Fecha: 2026-05-27
+Agente: Codex / agente backend-frontend EasyParte
+Rama: security/clientes-role-check
+Tipo de cambio: seguridad/backend
+Resumen: Se explicitan en `backend/routes/api.php` los roles permitidos para `POST /api/avisos`: `Administrador`, `Atencion al Cliente` y `Tecnico`. Se mantiene en `AvisoController` la restriccion de que `Tecnico` no puede asignar avisos a otro empleado. La regla de autoasignacion se revisa posteriormente en CAMBIO-0026.
+Archivos modificados:
+- `backend/routes/api.php`
+- `docs/testing/avisos_cancelacion.md`
+- `docs/seguimiento/incidencias.md`
+- `docs/seguimiento/pendientes.md`
+- `docs/seguimiento/registro_cambios_agentes.md`
+
+Motivo: Corregir la validacion manual donde `Tecnico` y `Atencion al Cliente` no podian crear avisos segun la regla funcional vigente.
+Pruebas realizadas: `php -l backend/routes/api.php`, `php -l backend/controllers/AvisoController.php` y `npm run build` en `frontend`. No se documentan tokens ni contrasenas.
+Riesgos: La visibilidad exacta del boton Cancelar para `Tecnico` sigue requiriendo editar `frontend/src/app/features/avisos/avisos.html`, no incluido en archivos permitidos en esta tarea.
+Estado: pendiente de revision
+Siguiente paso: Ejecutar AVISO-CAN-009 a AVISO-CAN-011 y permitir el ajuste del template de avisos para cerrar la parte visual del boton Cancelar.
+
+---
+
+## CAMBIO-0024 - Lectura de empleados para asignacion de avisos
+
+Fecha: 2026-05-27
+Agente: Codex / agente backend-frontend EasyParte
+Rama: security/clientes-role-check
+Tipo de cambio: seguridad/backend/documentacion
+Resumen: Se ajusta `GET /api/empleados` para permitir lectura a `Atencion al Cliente`, filtrada por empresa, con el objetivo de volver a poblar el selector de trabajadores al crear o editar avisos. `POST`, `PUT` y `DELETE` de empleados siguen reservados a `Administrador`.
+Archivos modificados:
+- `backend/routes/api.php`
+- `docs/contexto/matriz_permisos_backend.md`
+- `docs/testing/avisos_cancelacion.md`
+- `docs/seguimiento/incidencias.md`
+- `docs/seguimiento/pendientes.md`
+- `docs/seguimiento/registro_cambios_agentes.md`
+
+Motivo: Corregir el 403 detectado manualmente en `GET /api/empleados` para `Atencion al Cliente` sin abrir gestion general de empleados ni tocar base de datos, login, JWT, CORS, tenant o modelo de roles.
+Pruebas realizadas: `php -l backend/routes/api.php`. Las pruebas manuales quedan documentadas como pendientes; no se documentaron tokens ni contrasenas.
+Riesgos: La visibilidad exacta del boton Cancelar para `Tecnico` sigue dependiendo de `frontend/src/app/features/avisos/avisos.html`, archivo no permitido en esta tarea. La regla backend y la llamada segura `PUT /api/avisos/{id}/cancelar` se mantienen.
+Estado: pendiente de revision
+Siguiente paso: Ejecutar AVISO-CAN-018 a AVISO-CAN-021 y permitir el ajuste del template de avisos para mostrar el boton Cancelar a `Tecnico` solo en avisos asignados a el.
+
+---
+
+## CAMBIO-0025 - Visibilidad del boton Cancelar en avisos
+
+Fecha: 2026-05-27
+Agente: Codex / agente frontend EasyParte
+Rama: security/clientes-role-check
+Tipo de cambio: frontend/documentacion
+Resumen: Se corrige la visibilidad del boton Cancelar en la pantalla de avisos para que dependa de `puedeCancelarAviso(tarea)`, manteniendo la llamada existente a `cancelarAviso(...)` y sin tocar backend, servicios, rutas ni reglas de negocio.
+Archivos modificados:
+- `frontend/src/app/features/avisos/avisos.html`
+- `docs/testing/avisos_cancelacion.md`
+- `docs/seguimiento/incidencias.md`
+- `docs/seguimiento/pendientes.md`
+- `docs/seguimiento/registro_cambios_agentes.md`
+
+Motivo: Permitir que `Tecnico` vea el boton Cancelar solo en avisos asignados a su `id_empleado`, mientras `Administrador` y `Atencion al Cliente` lo ven en avisos cancelables de su empresa.
+Pruebas realizadas: `npm run build` en `frontend` correcto. Las pruebas manuales por rol quedan documentadas como pendientes; no se documentaron tokens ni contrasenas.
+Riesgos: El backend ya protege la accion, pero la visibilidad visual debe validarse manualmente en navegador con usuarios reales de cada rol.
+Estado: pendiente de revision
+Siguiente paso: Ejecutar AVISO-CAN-013 a AVISO-CAN-016 en navegador y confirmar que los avisos ya cancelados no muestran el boton.
+
+---
+
+## CAMBIO-0026 - Selector de trabajadores y creacion de avisos por tecnico
+
+Fecha: 2026-05-27
+Agente: Codex / agente backend-frontend EasyParte
+Rama: security/clientes-role-check
+Tipo de cambio: seguridad/backend/frontend/documentacion
+Resumen: Se corrige la carga del selector de trabajadores para `Atencion al Cliente` endureciendo la comprobacion de rol de `GET /api/empleados` frente a variantes con acentos/codificacion, sin abrir `POST`, `PUT` ni `DELETE` de empleados. Tambien se ajusta la creacion de avisos por `Tecnico` para permitir avisos libres o asignados a si mismo, pero nunca a otro trabajador.
+Archivos modificados:
+- `backend/routes/api.php`
+- `backend/controllers/AvisoController.php`
+- `frontend/src/app/features/avisos/avisos.ts`
+- `frontend/src/app/features/avisos/avisos.html`
+- `docs/testing/avisos_cancelacion.md`
+- `docs/seguimiento/incidencias.md`
+- `docs/seguimiento/pendientes.md`
+- `docs/seguimiento/registro_cambios_agentes.md`
+- `docs/contexto/matriz_permisos_backend.md`
+
+Motivo: Resolver dos fallos concretos del modulo de avisos: el desplegable vacio para `Atencion al Cliente` y la autoasignacion forzada de avisos creados por `Tecnico`.
+Pruebas realizadas: `php -l backend/routes/api.php`, `php -l backend/controllers/AvisoController.php` y `npm run build` en `frontend` correctos. Las pruebas manuales por rol quedan documentadas como pendientes; no se documentaron tokens ni contrasenas.
+Riesgos: La validacion real de permisos requiere repetir las pruebas manuales con usuarios de `Administrador`, `Atencion al Cliente` y `Tecnico` en XAMPP/local.
+Estado: pendiente de revision
+Siguiente paso: Ejecutar AVISO-CAN-009 a AVISO-CAN-012, AVISO-CAN-018 a AVISO-CAN-021 y AVISO-CAN-022.

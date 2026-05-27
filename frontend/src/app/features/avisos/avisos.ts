@@ -44,6 +44,29 @@ export default class Avisos implements OnInit {
     id_empleado: [null]
   });
 
+  esTecnico(): boolean {
+    const rol = this.authService.usuarioActual()?.rol_nombre;
+    return rol === 'Tecnico' || rol === 'Técnico' || rol === 'TÃ©cnico';
+  }
+
+  esAtencionCliente(): boolean {
+    const rol = this.authService.usuarioActual()?.rol_nombre;
+    return rol === 'Atencion al Cliente' || rol === 'Atención al Cliente' || rol === 'AtenciÃ³n al Cliente';
+  }
+
+  puedeCancelarAviso(tarea: any): boolean {
+    if (tarea.estado === 'Cancelada' || tarea.estado === 'Finalizada') return false;
+
+    const usuario = this.authService.usuarioActual();
+    if (!usuario) return false;
+
+    if (usuario.rol_nombre === 'Administrador' || this.esAtencionCliente()) {
+      return true;
+    }
+
+    return this.esTecnico() && Number(tarea.id_empleado) === Number(usuario.id_empleado);
+  }
+
   ngOnInit() {
     //Cargar los avisos desde PHP
     this.tareasService.cargarTareas();
@@ -52,7 +75,7 @@ export default class Avisos implements OnInit {
     this.clientesService.cargarClientes();
 
     //Carga a los empleados
-    if (this.authService.usuarioActual()?.rol_nombre !== 'Técnico') {
+    if (!this.esTecnico()) {
       this.adminService.cargarEmpleados();
     }
 
@@ -96,12 +119,12 @@ export default class Avisos implements OnInit {
     let avisos = this.tareasService.tareas();
 
     // Administrador y Atención al Cliente ven todos
-    if (usuario.rol_nombre === 'Administrador' || usuario.rol_nombre === 'Atención al Cliente') {
+    if (usuario.rol_nombre === 'Administrador' || this.esAtencionCliente()) {
       // Mantienen la lista completa.
     }
 
     // Técnico solo ve los suyos y los no asignados
-    else if (usuario.rol_nombre === 'Técnico') {
+    else if (this.esTecnico()) {
       avisos = avisos.filter(aviso =>
         aviso.id_empleado === usuario.id_empleado || aviso.id_empleado === null
       );
@@ -123,7 +146,7 @@ export default class Avisos implements OnInit {
   async guardarAviso() {
     if (this.avisoForm.invalid) return;
 
-    const datosFormulario = this.avisoForm.value;
+    const datosFormulario: any = { ...this.avisoForm.value };
     let exito = false;
 
     if (this.idAvisoEditando()) {
@@ -156,14 +179,23 @@ export default class Avisos implements OnInit {
   }
 
   cancelarAviso(idTarea: number) {
+    const tarea = this.tareasService.tareas().find(item => item.id_tarea === idTarea);
+    if (!tarea || !this.puedeCancelarAviso(tarea)) {
+      this.alertService.mostrar('Sin permisos', 'No puedes cancelar este aviso.', 'error');
+      return;
+    }
 
     this.alertService.confirmar(
       '¿Cancelar Aviso?',
       '¿Estás seguro de que deseas cancelar este aviso?.',
-      () => {
+      async () => {
 
-        this.tareasService.cancelarTarea(idTarea);
-        this.alertService.mostrar('Cancelado', 'El aviso ha sido cancelado.', 'info');
+        const exito = await this.tareasService.cancelarTarea(idTarea);
+        if (exito) {
+          this.alertService.mostrar('Cancelado', 'El aviso ha sido cancelado.', 'info');
+        } else {
+          this.alertService.mostrar('Error', 'No se ha podido cancelar el aviso.', 'error');
+        }
       }
     );
   }

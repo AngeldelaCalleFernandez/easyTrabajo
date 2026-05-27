@@ -58,6 +58,23 @@ class AvisoController
         echo json_encode(["error" => "No tienes permisos para usar uno de los recursos relacionados."]);
     }
 
+    private function userHasRole($usuarioLogueado, array $rolesPermitidos)
+    {
+        $rol = isset($usuarioLogueado->rol_nombre) ? $usuarioLogueado->rol_nombre : '';
+        return in_array($rol, $rolesPermitidos, true);
+    }
+
+    private function isTecnico($usuarioLogueado)
+    {
+        return $this->userHasRole($usuarioLogueado, ['Tecnico', 'Técnico', 'TÃ©cnico']);
+    }
+
+    private function denyPermission()
+    {
+        http_response_code(403);
+        echo json_encode(["error" => "No tienes permisos para realizar esta accion."]);
+    }
+
     // CARGAR AVISOS 
     public function getAll($usuarioLogueado)
     {
@@ -71,8 +88,8 @@ class AvisoController
                   LEFT JOIN empleado e ON a.id_empleado = e.id_empleado AND e.id_empresa = a.id_empresa
                   WHERE a.id_empresa = :id_empresa ";
         
-        // Si es Técnico, solo ve sus avisos o los que no tienen nadie asignado
-        if ($usuarioLogueado->rol_nombre === 'Técnico') {
+        // Si es Tecnico, solo ve sus avisos o los que no tienen nadie asignado
+        if ($this->isTecnico($usuarioLogueado)) {
             $query .= " AND (a.id_empleado = :id_empleado OR a.id_empleado IS NULL)";
         }
 
@@ -81,7 +98,7 @@ class AvisoController
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(":id_empresa", $usuarioLogueado->id_empresa);
         
-        if ($usuarioLogueado->rol_nombre === 'Técnico') {
+        if ($this->isTecnico($usuarioLogueado)) {
             $stmt->bindParam(":id_empleado", $usuarioLogueado->id_empleado);
         }
 
@@ -103,6 +120,22 @@ class AvisoController
 
         $id_empleado = !empty($data->id_empleado) ? $data->id_empleado : null;
         $id_departamento = !empty($data->id_departamento) ? $data->id_departamento : null;
+
+        if ($this->isTecnico($usuarioLogueado)) {
+            if ($id_empleado !== null && empty($usuarioLogueado->id_empleado)) {
+                $this->denyPermission();
+                return;
+            }
+
+            if ($id_empleado !== null && (int)$id_empleado !== (int)$usuarioLogueado->id_empleado) {
+                $this->denyPermission();
+                return;
+            }
+
+            if ($id_empleado !== null) {
+                $id_empleado = $usuarioLogueado->id_empleado;
+            }
+        }
 
         if (!$this->validateRelatedIds($data->id_cliente, $id_empleado, $id_departamento, $usuarioLogueado->id_empresa)) {
             $this->denyForeignRelation();
@@ -181,6 +214,16 @@ class AvisoController
             return;
         }
 
+        if ($this->isTecnico($usuarioLogueado) && $id_empleado !== null && (int)$id_empleado !== (int)$usuarioLogueado->id_empleado) {
+            $this->denyPermission();
+            return;
+        }
+
+        if (strtolower((string)$estado) === 'cancelada' && strtolower((string)$actual['estado']) !== 'cancelada') {
+            $this->cancel($id, $usuarioLogueado);
+            return;
+        }
+
         // Control de fecha de fin
         $fecha_fin = $actual['fecha_fin'];
         if (($estado === 'Finalizada' || $estado === 'Cancelada') && empty($fecha_fin)) {
@@ -218,6 +261,61 @@ class AvisoController
             error_log("Error al actualizar aviso: " . $e->getMessage());
             http_response_code(400);
             echo json_encode(["error" => "No se ha podido actualizar el aviso."]);
+        }
+    }
+
+    // CANCELAR AVISO SIN BORRADO FISICO
+    public function cancel($id, $usuarioLogueado)
+    {
+        $query_check = "SELECT id_tarea, id_empleado FROM " . $this->tabla . " WHERE id_tarea = :id AND id_empresa = :id_empresa";
+        $stmt_check = $this->conn->prepare($query_check);
+        $stmt_check->bindParam(":id", $id);
+        $stmt_check->bindParam(":id_empresa", $usuarioLogueado->id_empresa);
+        $stmt_check->execute();
+
+        if ($stmt_check->rowCount() == 0) {
+            http_response_code(404);
+            echo json_encode(["error" => "Aviso no encontrado."]);
+            return;
+        }
+
+        $aviso = $stmt_check->fetch(PDO::FETCH_ASSOC);
+        $rolesGestion = ['Administrador', 'Atencion al Cliente', 'Atención al Cliente', 'AtenciÃ³n al Cliente'];
+        $rolesTecnico = ['Tecnico', 'Técnico', 'TÃ©cnico'];
+
+        if (!$this->userHasRole($usuarioLogueado, $rolesGestion)) {
+            if (!$this->userHasRole($usuarioLogueado, $rolesTecnico)) {
+                $this->denyPermission();
+                return;
+            }
+
+            if (empty($aviso['id_empleado']) || (int)$aviso['id_empleado'] !== (int)$usuarioLogueado->id_empleado) {
+                $this->denyPermission();
+                return;
+            }
+        }
+
+        $estado = 'Cancelada';
+        $fecha_fin = date('Y-m-d H:i:s');
+
+        $query = "UPDATE " . $this->tabla . "
+                  SET estado = :estado, fecha_fin = :fecha_fin
+                  WHERE id_tarea = :id AND id_empresa = :id_empresa";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":estado", $estado);
+        $stmt->bindParam(":fecha_fin", $fecha_fin);
+        $stmt->bindParam(":id", $id);
+        $stmt->bindParam(":id_empresa", $usuarioLogueado->id_empresa);
+
+        try {
+            if ($stmt->execute()) {
+                http_response_code(200);
+                echo json_encode(["mensaje" => "Aviso cancelado"]);
+            }
+        } catch (PDOException $e) {
+            error_log("Error al cancelar aviso: " . $e->getMessage());
+            http_response_code(400);
+            echo json_encode(["error" => "No se ha podido cancelar el aviso."]);
         }
     }
 

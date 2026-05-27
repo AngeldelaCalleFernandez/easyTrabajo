@@ -291,3 +291,17 @@ Pendiente:
 9. ¿Qué tipo de hosting tienes pensado?
 10. ¿Quieres que Codex trabaje con ramas y PR siempre?
 
+---
+
+## 18. Permisos operativos de tecnicos
+
+## Duda 17 - Cancelacion de avisos por tecnico
+
+Confirmar si el técnico puede cancelar solo avisos asignados a él o también avisos sin asignar.
+
+Contexto:
+
+- La matriz minima de permisos backend separa cancelar aviso de borrar aviso fisicamente.
+- El tecnico no debe poder borrar fisicamente avisos.
+- La cancelacion por tecnico queda permitida solo con condiciones, pero falta concretar su alcance operativo.
+
