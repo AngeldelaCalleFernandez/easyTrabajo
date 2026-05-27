@@ -605,3 +605,27 @@ Pruebas realizadas: `php -l backend/routes/api.php`, `php -l backend/controllers
 Riesgos: La validacion real de permisos requiere repetir las pruebas manuales con usuarios de `Administrador`, `Atencion al Cliente` y `Tecnico` en XAMPP/local.
 Estado: pendiente de revision
 Siguiente paso: Ejecutar AVISO-CAN-009 a AVISO-CAN-012, AVISO-CAN-018 a AVISO-CAN-021 y AVISO-CAN-022.
+
+---
+
+## CAMBIO-0027 - Permisos minimos backend en partes/albaranes
+
+Fecha: 2026-05-27
+Agente: Codex / agente backend-auditor EasyParte
+Rama: security/clientes-role-check
+Tipo de cambio: seguridad/backend/documentacion
+Resumen: Se aplican permisos minimos backend en `/api/partes`: `Atencion al Cliente` queda solo lectura, `Tecnico` solo puede ver/editar partes propios y crear partes para si mismo; si crea desde aviso, el aviso debe estar asignado al tecnico. `Administrador` conserva operaciones sobre partes de su empresa.
+Archivos modificados:
+- `backend/routes/api.php`
+- `backend/controllers/ParteTrabajoController.php`
+- `docs/testing/partes_permisos.md`
+- `docs/contexto/matriz_permisos_backend.md`
+- `docs/seguimiento/incidencias.md`
+- `docs/seguimiento/pendientes.md`
+- `docs/seguimiento/registro_cambios_agentes.md`
+
+Motivo: Continuar PEN-0005 con permisos minimos de partes/albaranes sin modificar frontend, base de datos, login, JWT, CORS, tenant ni crear `RoleMiddleware` completo.
+Pruebas realizadas: `php -l backend/routes/api.php` y `php -l backend/controllers/ParteTrabajoController.php` correctos. Las pruebas manuales quedan documentadas como pendientes; no se documentaron tokens ni contrasenas.
+Riesgos: INC-0014 sigue abierta porque el cierre formal con firma, hash, bloqueo y rectificacion no forma parte de esta fase.
+Estado: pendiente de revision
+Siguiente paso: Ejecutar `docs/testing/partes_permisos.md` con usuarios de Administrador, Atencion al Cliente y Tecnico.

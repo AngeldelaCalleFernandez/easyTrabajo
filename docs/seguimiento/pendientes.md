@@ -246,6 +246,8 @@ Actualmente solo hay `AuthMiddleware` y comprobaciones manuales parciales.
 - [ ] Validar manualmente boton Cancelar por rol y aviso asignado.
 - [ ] Revalidar selector de empleados en avisos para `Atencion al Cliente`.
 - [ ] Revalidar que `Atencion al Cliente` no puede crear, editar ni dar de baja empleados.
+- [x] Permisos minimos backend aplicados en `/api/partes` para bloquear escritura de `Atencion al Cliente` y limitar `Tecnico` a partes propios.
+- [ ] Pruebas manuales de permisos de partes/albaranes documentadas como correctas.
 - [ ] Endpoints restantes documentan roles permitidos en codigo/rutas.
 - [ ] Clientes, avisos, partes y administracion validan permisos en backend.
 - [ ] Pruebas negativas por rol en los modulos restantes.

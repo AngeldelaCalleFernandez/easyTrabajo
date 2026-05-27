@@ -899,10 +899,27 @@ Partes cerrados sin integridad ni trazabilidad.
 
 Implementar cierre formal en endpoint especifico con auditoria y hash.
 
+### Avance relacionado PEN-0005
+
+Se aplica una fase minima de permisos backend para `/api/partes` sin cerrar INC-0014:
+
+- `Administrador` puede consultar, crear y editar partes de su empresa.
+- `Atencion al Cliente` queda en solo lectura para partes/albaranes.
+- `Tecnico` solo lista partes propios.
+- `Tecnico` solo crea partes para su propio `id_empleado`.
+- Si `Tecnico` crea un parte desde aviso, el aviso debe pertenecer a su empresa y estar asignado a el.
+- `Tecnico` no puede editar partes de otro tecnico ni reasignar partes por payload.
+- No se implementa firma, hash, bloqueo definitivo ni rectificacion en esta tarea.
+
+Validacion documentada en:
+
+- `docs/testing/partes_permisos.md`
+
 ### Pruebas necesarias
 
 - [ ] Cerrar parte y verificar hash.
 - [ ] Intentar editar parte cerrado/facturado.
+- [ ] Repetir pruebas manuales de permisos minimos de partes/albaranes.
 
 ---
 

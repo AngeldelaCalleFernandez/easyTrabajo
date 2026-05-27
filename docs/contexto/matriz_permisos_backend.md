@@ -98,8 +98,8 @@ Convencion:
 | Cancelar aviso | Si | Si | Parcial | Tecnico solo puede cancelar avisos asignados a el. No puede cancelar avisos sin asignar ni asignados a otros tecnicos. |
 | Borrar aviso fisicamente | Parcial | Parcial | No | Solo permitido a Administrador y Atencion al Cliente si el aviso ya esta cancelado. No borrar avisos no cancelados. |
 | Listar partes/albaranes | Si | Si | Parcial | Tecnico solo partes propios; Atencion al Cliente consulta operativa. |
-| Crear parte | Si | No | Parcial | Tecnico solo para si mismo o aviso asignado; Administrador puede crear/asignar. |
-| Editar/cerrar parte | Si | No | Parcial | Tecnico solo parte propio; Administrador global de empresa. |
+| Crear parte | Si | No | Parcial | Tecnico solo para si mismo; si indica aviso, debe estar asignado al tecnico. Administrador puede crear/asignar dentro de su empresa. |
+| Editar/cerrar parte | Si | No | Parcial | Tecnico solo parte propio; Atencion al Cliente queda solo lectura. Cierre formal con firma/hash fuera de esta fase. |
 | Listar empleados | Si | Parcial | No | Atencion al Cliente puede listar empleados activos de su empresa solo para asignar avisos. |
 | Crear/editar/baja empleados | Si | No | No | Mantener control actual. |
 | Listar usuarios | Si | No | No | Mantener control actual. |
