@@ -66,7 +66,10 @@ class ParteTrabajoController
 
     private function isTecnico($usuarioLogueado)
     {
-        return $this->userHasRole($usuarioLogueado, ['Tecnico', 'TÃ©cnico', 'TÃƒÂ©cnico']);
+        $rol = isset($usuarioLogueado->rol_nombre) ? trim((string)$usuarioLogueado->rol_nombre) : '';
+        $rolNormalizado = strtolower(strtr($rol, ['É' => 'e', 'é' => 'e']));
+
+        return $rolNormalizado === 'tecnico';
     }
 
     private function denyPermission($message = "No tienes permisos para realizar esta accion.")

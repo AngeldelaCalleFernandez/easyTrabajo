@@ -199,6 +199,20 @@ class AvisoController
 
         $actual = $stmt_check->fetch(PDO::FETCH_ASSOC);
 
+        if ($this->isTecnico($usuarioLogueado)) {
+            $idEmpleadoTecnico = isset($usuarioLogueado->id_empleado)
+                ? (int)$usuarioLogueado->id_empleado
+                : 0;
+            $idEmpleadoActual = $actual['id_empleado'] !== null
+                ? (int)$actual['id_empleado']
+                : null;
+
+            if ($idEmpleadoTecnico <= 0 || ($idEmpleadoActual !== null && $idEmpleadoActual !== $idEmpleadoTecnico)) {
+                $this->denyPermission();
+                return;
+            }
+        }
+
         // Lógica de combinación de datos 
         $descripcion = isset($data->descripcion) ? $data->descripcion : $actual['descripcion'];
         $importancia = isset($data->importancia) ? $data->importancia : $actual['importancia'];
