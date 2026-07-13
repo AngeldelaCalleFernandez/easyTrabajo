@@ -974,3 +974,47 @@ Separar schema, seed demo y datos reales; documentar que seeds no son produccion
 - Endpoint confiando en `id_empresa` frontend: confirmado como riesgo frontend hardcodeado en INC-0011; backend revisado usa token en los endpoints principales, pero debe eliminarse del payload para evitar regresiones.
 - Controlador podria exponer errores internos: confirmado para conexion de BD en INC-0003.
 - Configuracion local o CORS abierto: confirmado en INC-0001, INC-0002 e INC-0004.
+
+## INC-0016 - Técnicos pueden acceder y modificar partes ajenos
+
+ID: INC-XXXX
+Título: Técnicos pueden acceder y modificar partes de otros técnicos
+Prioridad: alta
+Estado: abierta
+Detectado por: pruebas manuales PEN-0005
+Fecha: 2026-07-13
+
+### Descripción
+
+Durante la validación de permisos de partes/albaranes se ha comprobado que un
+usuario con rol Técnico puede visualizar y modificar partes pertenecientes a
+otro técnico.
+
+El problema se reproduce tanto mediante Postman como desde la aplicación Angular.
+
+Esto supone un fallo de autorización horizontal: un técnico puede operar sobre
+recursos de otro empleado de la misma empresa.
+
+### Pruebas fallidas
+
+- TEC-PAR-01: GET /api/partes no devuelve únicamente partes propios.
+- TEC-PAR-02: creación de parte propio incorrecta.
+- TEC-PAR-03: POST indicando otro empleado no devuelve 403.
+- TEC-PAR-04: POST usando un aviso asignado a otro técnico no devuelve 403.
+- TEC-PAR-07: PUT sobre parte de otro técnico no devuelve 403.
+
+### Resultado esperado
+
+- El Técnico solo puede listar partes cuyo id_empleado coincide con el
+  id_empleado de su sesión/token.
+- El Técnico solo puede crear partes para sí mismo.
+- Si envía un id_empleado diferente al suyo, la API devuelve 403.
+- Si vincula un aviso, el aviso debe estar asignado al técnico autenticado.
+- El Técnico solo puede editar o cerrar partes propios.
+- El Técnico no puede reasignar empleados.
+- Los intentos rechazados no deben modificar la base de datos.
+
+### Estado de PEN-0005
+
+PEN-0005 continúa como parcial hasta corregir la incidencia y repetir todas las
+pruebas de Técnico y la regresión final.

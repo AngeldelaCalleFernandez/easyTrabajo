@@ -31,6 +31,27 @@ No se deben pegar tokens completos, contrasenas ni secretos en este documento.
 | PARTE-PERM-014 | `PUT /api/partes/{id}` | Administrador | Edicion de parte de su empresa | HTTP 200. Parte actualizado. | Pendiente de ejecutar | pendiente | Cierre formal con firma/hash queda fuera de esta tarea. |
 | PARTE-PERM-015 | Regresion local | Usuarios validos | N/A | Login, dashboard, avisos, clientes y partes siguen funcionando. | Pendiente de ejecutar | pendiente | Prueba funcional manual en XAMPP/local. |
 
+## Tabla Permisos
+
+Rol	Prueba	Esperado	Obtenido	BD  correcta	Estado
+ADM-PAR-01	Administrador	GET partes	200	si	Sí	resuelta
+ADM-PAR-02	Administrador	POST parte	201	si	Sí	resuelta
+ADM-PAR-03	Administrador	PUT parte	200	si	Sí	resuelta
+AC-PAR-01	Atención Cliente GET partes	200	si	Sí	resuelta
+AC-PAR-02	Atención Cliente POST parte	403	si	Sí	resuelta
+AC-PAR-03	Atención Cliente PUT parte	403	si	Sí	resuelta
+TEC-PAR-01	Técnico GET solo propios	200	no	No	Pendiente
+TEC-PAR-02	Técnico	POST propio	201	no	No	Pendiente
+TEC-PAR-03	Técnico POST otro empleado	403	no	No	Pendiente
+TEC-PAR-04	Técnico POST aviso ajeno	403	no	No	Pendiente
+TEC-PAR-05	Técnico POST aviso propio	201	si	si	Pendiente
+TEC-PAR-06	Técnico	PUT propio	200	si	Sí	resuelta
+TEC-PAR-07	Técnico	PUT ajeno	403	no	No	Pendiente
+TEC-PAR-08	Técnico Reasignar empleado	403	si	Sí	resuelta
+TEC-PAR-09	Técnico	Cerrar propio	200	si	Sí	resuelta
+REG-PAR-01	Todos	Regresión funcional	Correcta	—	—	Pendiente
+
+
 ## Estado documental
 
 - PEN-0005 sigue `parcial`.
