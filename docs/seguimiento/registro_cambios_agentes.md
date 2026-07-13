@@ -629,3 +629,27 @@ Pruebas realizadas: `php -l backend/routes/api.php` y `php -l backend/controller
 Riesgos: INC-0014 sigue abierta porque el cierre formal con firma, hash, bloqueo y rectificacion no forma parte de esta fase.
 Estado: pendiente de revision
 Siguiente paso: Ejecutar `docs/testing/partes_permisos.md` con usuarios de Administrador, Atencion al Cliente y Tecnico.
+
+---
+
+## CAMBIO-0028 - Correcciones de acceso horizontal en avisos y partes
+
+Fecha: 2026-07-13
+Agente: Codex / agente backend-auditor EasyParte
+Rama: security/clientes-role-check
+Tipo de cambio: seguridad/backend/documentacion
+Resumen: Se corrigen y validan dos fallos de autorizacion horizontal. `ParteTrabajoController::isTecnico()` reconoce el rol real `Tecnico` y reactiva los controles de partes propios. `AvisoController::update()` comprueba la asignacion actual antes de procesar el payload y bloquea la apropiacion de avisos ajenos.
+Archivos de codigo incluidos en el commit `0e2fa38`:
+- `backend/controllers/ParteTrabajoController.php`
+- `backend/controllers/AvisoController.php`
+
+Pruebas realizadas:
+- Partes: TEC-PAR-01, TEC-PAR-03, TEC-PAR-04, TEC-PAR-05, TEC-PAR-07 y TEC-PAR-08 correctas con login/JWT reales y comprobacion de base de datos.
+- Avisos: AVI-TEC-01 a AVI-TEC-06 correctas; los rechazos 403 no producen cambios parciales.
+- Regresion: Administrador y Atencion al Cliente conservan la edicion autorizada de avisos; Atencion al Cliente recibe 403 al crear o editar partes.
+- Sintaxis PHP y `git diff --check` correctos.
+
+Incidencias: INC-0016 e INC-0017 quedan resueltas y validadas.
+Riesgos: Falta prueba real con segunda empresa; normalizacion de roles duplicada; pruebas de permisos manuales; decision pendiente sobre liberar un aviso propio; fixtures pendientes de limpieza controlada.
+Estado: validado
+Siguiente paso: Automatizar la regresion de permisos o preparar una segunda empresa de pruebas segura en una tarea separada.

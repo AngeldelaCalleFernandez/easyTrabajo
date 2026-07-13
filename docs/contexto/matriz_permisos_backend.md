@@ -67,11 +67,11 @@ Notas:
 | `/api/clientes/{id}` | DELETE | Cualquier usuario autenticado | Baja logica por `id_empresa`. No valida rol. |
 | `/api/avisos` | GET | Cualquier usuario autenticado | Filtra por empresa; Tecnico ve asignados o sin asignar. |
 | `/api/avisos` | POST | Cualquier usuario autenticado | Valida IDs relacionados por empresa, pero no rol. |
-| `/api/avisos/{id}` | PUT | Cualquier usuario autenticado | Valida empresa e IDs relacionados, pero no rol. |
+| `/api/avisos/{id}` | PUT | Cualquier usuario autenticado | Filtra por empresa. Tecnico solo edita avisos propios o toma avisos libres para si; no puede apropiarse de avisos ajenos ni asignarlos a otro empleado. |
 | `/api/avisos/{id}` | DELETE | Cualquier usuario autenticado | Elimina fisicamente por empresa. No valida rol. |
 | `/api/partes` | GET | Cualquier usuario autenticado | Filtra por empresa; Tecnico ve solo sus partes. |
 | `/api/partes` | POST | Cualquier usuario autenticado | Tecnico queda forzado a su `id_empleado`; otros roles pueden indicar empleado. |
-| `/api/partes/{id}` | PUT | Cualquier usuario autenticado | Tecnico solo actualiza partes propios; otros roles sin restriccion de rol. |
+| `/api/partes/{id}` | PUT | Administrador o Tecnico autorizado | Tecnico solo actualiza partes propios; Atencion al Cliente recibe 403. |
 | `/api/empleados` | GET/POST/PUT/DELETE | Solo `Administrador` | Control en `routes/api.php`. Filtra por empresa. |
 | `/api/usuarios` | GET/POST/PUT/DELETE | Solo `Administrador` | Control en `routes/api.php`. Filtra por empresa. |
 | `/api/roles` | GET | Solo `Administrador` | Control en `routes/api.php`. Lista roles globales. |
@@ -141,6 +141,21 @@ Decision funcional sobre avisos pendiente de implementacion:
 - `Tecnico` no puede borrar fisicamente avisos.
 - No se debe borrar fisicamente un aviso que no este en estado `Cancelada`.
 - El estado actual del codigo no cumple esta separacion: `AvisoController::delete()` ejecuta `DELETE FROM tarea`.
+
+## Validacion de seguridad 2026-07-13
+
+Commit validado: `0e2fa38`.
+
+- `ParteTrabajoController` reconoce el rol real `Tecnico` con o sin tilde y activa los controles de propiedad existentes.
+- `AvisoController::update()` comprueba la asignacion actual antes de procesar el payload y bloquea la apropiacion horizontal.
+- Partes: TEC-PAR-01, TEC-PAR-03, TEC-PAR-04, TEC-PAR-05, TEC-PAR-07 y TEC-PAR-08 correctas, con verificacion en base de datos.
+- Avisos: AVI-TEC-01 a AVI-TEC-06 correctas, sin modificaciones parciales en respuestas 403.
+- Atencion al Cliente conserva lectura de partes, recibe 403 en POST/PUT de partes y conserva edicion autorizada de avisos.
+- Administrador conserva edicion autorizada de avisos.
+
+Permanecen pendientes la prueba con segunda empresa, la centralizacion de roles,
+la automatizacion de estas pruebas, la decision sobre liberar un aviso propio y
+la limpieza controlada de fixtures.
 
 ## Permisos objetivo futuros
 

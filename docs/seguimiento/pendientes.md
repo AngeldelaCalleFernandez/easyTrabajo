@@ -247,7 +247,9 @@ Actualmente solo hay `AuthMiddleware` y comprobaciones manuales parciales.
 - [ ] Revalidar selector de empleados en avisos para `Atencion al Cliente`.
 - [ ] Revalidar que `Atencion al Cliente` no puede crear, editar ni dar de baja empleados.
 - [x] Permisos minimos backend aplicados en `/api/partes` para bloquear escritura de `Atencion al Cliente` y limitar `Tecnico` a partes propios.
-- [ ] Pruebas manuales de permisos de partes/albaranes documentadas como correctas.
+- [x] Pruebas manuales de permisos de partes/albaranes documentadas como correctas para propiedad, creacion y reasignacion de `Tecnico`.
+- [x] Corregida y validada la deteccion del rol real `Tecnico` en permisos de partes (`0e2fa38`).
+- [x] Corregido y validado el bypass de apropiacion de avisos ajenos mediante `PUT` (`0e2fa38`).
 - [ ] Endpoints restantes documentan roles permitidos en codigo/rutas.
 - [ ] Clientes, avisos, partes y administracion validan permisos en backend.
 - [ ] Pruebas negativas por rol en los modulos restantes.
@@ -258,7 +260,11 @@ Alto. Puede cambiar acceso a modulos existentes.
 
 ### Siguiente paso
 
-Ejecutar las pruebas manuales actualizadas de `docs/testing/clientes_permisos.md` y `docs/testing/avisos_cancelacion.md`, incluyendo la visibilidad del boton Cancelar por rol. PEN-0005 sigue parcial porque faltan validaciones completas de avisos, partes, administracion y/o un servicio/middleware centralizado.
+PEN-0005 sigue parcial porque falta autorizacion centralizada y validacion completa
+de endpoints restantes. Continuan pendientes una prueba real con segunda empresa,
+eliminar la normalizacion duplicada de roles, automatizar las pruebas, decidir si
+un tecnico puede dejar libre un aviso propio y limpiar de forma controlada los
+fixtures identificados de prueba.
 
 ---
 

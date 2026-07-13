@@ -977,10 +977,10 @@ Separar schema, seed demo y datos reales; documentar que seeds no son produccion
 
 ## INC-0016 - Técnicos pueden acceder y modificar partes ajenos
 
-ID: INC-XXXX
+ID: INC-0016
 Título: Técnicos pueden acceder y modificar partes de otros técnicos
 Prioridad: alta
-Estado: abierta
+Estado: resuelta y validada
 Detectado por: pruebas manuales PEN-0005
 Fecha: 2026-07-13
 
@@ -990,18 +990,30 @@ Durante la validación de permisos de partes/albaranes se ha comprobado que un
 usuario con rol Técnico puede visualizar y modificar partes pertenecientes a
 otro técnico.
 
-El problema se reproduce tanto mediante Postman como desde la aplicación Angular.
+La causa era que `ParteTrabajoController::isTecnico()` no reconocía el valor
+real `Técnico` almacenado en la base de datos. Al no identificar el rol, no se
+activaban los filtros y comprobaciones de propiedad ya existentes.
 
 Esto supone un fallo de autorización horizontal: un técnico puede operar sobre
 recursos de otro empleado de la misma empresa.
 
-### Pruebas fallidas
+### Corrección aplicada
 
-- TEC-PAR-01: GET /api/partes no devuelve únicamente partes propios.
-- TEC-PAR-02: creación de parte propio incorrecta.
-- TEC-PAR-03: POST indicando otro empleado no devuelve 403.
-- TEC-PAR-04: POST usando un aviso asignado a otro técnico no devuelve 403.
-- TEC-PAR-07: PUT sobre parte de otro técnico no devuelve 403.
+Se normaliza el rol eliminando espacios exteriores, tratando `É/é`,
+convirtiendo a minúsculas y comparando de forma exacta con `tecnico` en
+`backend/controllers/ParteTrabajoController.php`.
+
+Commit: `0e2fa38` (`security: bloquear acceso tecnico a avisos y partes ajenos`).
+
+### Pruebas de validación
+
+- TEC-PAR-01: GET devuelve 200, solo partes propios y cero partes ajenos.
+- TEC-PAR-03: POST indicando otro empleado devuelve 403 y no inserta registros.
+- TEC-PAR-04: POST con aviso ajeno devuelve 403 y no inserta registros.
+- TEC-PAR-05: POST con aviso propio devuelve 201.
+- TEC-PAR-07: PUT sobre parte ajeno devuelve 403 y no modifica la base de datos.
+- TEC-PAR-08: intento de reasignación por payload devuelve 403 y no modifica el parte.
+- Atención al Cliente recibe 403 al crear o editar partes.
 
 ### Resultado esperado
 
@@ -1014,7 +1026,56 @@ recursos de otro empleado de la misma empresa.
 - El Técnico no puede reasignar empleados.
 - Los intentos rechazados no deben modificar la base de datos.
 
-### Estado de PEN-0005
+### Estado final
 
-PEN-0005 continúa como parcial hasta corregir la incidencia y repetir todas las
-pruebas de Técnico y la regresión final.
+Incidencia resuelta y validada el 2026-07-13. PEN-0005 continúa parcial por los
+riesgos y endpoints restantes, no por esta incidencia.
+
+---
+
+## INC-0017 - Apropiación de avisos ajenos mediante PUT
+
+ID: INC-0017
+Título: Un técnico puede apropiarse de un aviso asignado a otro técnico
+Prioridad: alta
+Estado: resuelta y validada
+Detectado por: prueba aislada de autorización horizontal
+Fecha: 2026-07-13
+
+### Descripción
+
+`AvisoController::update()` validaba el `id_empleado` resultante del payload,
+pero no comprobaba primero la asignación actual del aviso. Un técnico podía
+enviar su propio `id_empleado` sobre un aviso ajeno, apropiárselo y modificar
+otros campos en la misma petición.
+
+### Corrección aplicada
+
+Tras recuperar el aviso por ID y empresa, el controlador comprueba su asignación
+actual antes de procesar el payload. Rechaza a técnicos sin empleado válido y
+devuelve 403 si el aviso pertenece a otro empleado. Se mantiene la toma de
+avisos sin asignar y la prohibición de asignarlos a otro técnico. Toda la
+autorización se ejecuta antes del `UPDATE`.
+
+Archivo: `backend/controllers/AvisoController.php`.
+Commit: `0e2fa38` (`security: bloquear acceso tecnico a avisos y partes ajenos`).
+
+### Pruebas de validación
+
+- AVI-TEC-01: editar aviso propio devuelve 200.
+- AVI-TEC-02: editar aviso ajeno devuelve 403 y no modifica datos.
+- AVI-TEC-03: apropiarse de aviso ajeno devuelve 403 y no modifica datos.
+- AVI-TEC-04: reasignar aviso propio a otro técnico devuelve 403.
+- AVI-TEC-05: tomar aviso sin asignar devuelve 200.
+- AVI-TEC-06: asignar aviso libre a otro técnico devuelve 403.
+- GET de técnico devuelve avisos propios y libres, sin avisos del otro técnico.
+- Cancelar aviso propio devuelve 200 y cancelar aviso ajeno devuelve 403.
+- Administrador y Atención al Cliente conservan la edición autorizada con 200.
+
+### Riesgos pendientes
+
+- Falta una prueba real con una segunda empresa.
+- La normalización de roles continúa duplicada.
+- Las pruebas de permisos siguen siendo manuales.
+- Falta decidir si un técnico puede dejar sin asignar un aviso propio.
+- Los fixtures de prueba requieren una limpieza controlada posterior.
