@@ -653,3 +653,29 @@ Incidencias: INC-0016 e INC-0017 quedan resueltas y validadas.
 Riesgos: Falta prueba real con segunda empresa; normalizacion de roles duplicada; pruebas de permisos manuales; decision pendiente sobre liberar un aviso propio; fixtures pendientes de limpieza controlada.
 Estado: validado
 Siguiente paso: Automatizar la regresion de permisos o preparar una segunda empresa de pruebas segura en una tarea separada.
+
+---
+
+## CAMBIO-0029 - Registro final de pruebas manuales de partes/albaranes
+
+Fecha: 2026-07-23
+Agente: Codex / agente backend-auditor documental EasyParte
+Rama: security/clientes-role-check
+Tipo de cambio: documentacion/testing
+Resumen: Se registran como correctas las pruebas manuales de permisos minimos de partes/albaranes ejecutadas por la persona responsable del proyecto para `Administrador`, `Atencion al Cliente` y `Tecnico`, junto con la regresion funcional de login, dashboard, avisos, clientes y partes.
+Archivos modificados:
+- `docs/testing/partes_permisos.md`
+- `docs/seguimiento/pendientes.md`
+- `docs/seguimiento/registro_cambios_agentes.md`
+
+Resultados registrados:
+- `Administrador`: GET, POST y PUT de partes correctos.
+- `Atencion al Cliente`: GET correcto; POST y PUT bloqueados con 403.
+- `Tecnico`: GET limitado a partes propios; POST propio correcto; POST con otro empleado o aviso ajeno bloqueado con 403; POST sobre aviso propio correcto; PUT propio correcto; PUT ajeno y reasignacion bloqueados con 403.
+- Regresion: login, dashboard, avisos, clientes y partes siguen funcionando.
+
+Motivo: Cerrar el desfase entre las pruebas ya ejecutadas y las filas que todavia figuraban como pendientes en la matriz documental.
+Pruebas realizadas por Codex: revision de consistencia documental y validacion del diff; Codex no repite las pruebas manuales ni registra tokens o contrasenas.
+Riesgos: PEN-0005 permanece parcial porque no existe todavia autorizacion centralizada completa. INC-0014 permanece abierta porque el cierre formal con firma, hash, bloqueo y rectificacion queda fuera de este alcance.
+Estado: documentacion validada
+Siguiente paso: Continuar PEN-0005 en una tarea separada sin cerrar INC-0014 hasta implementar y validar el cierre formal.

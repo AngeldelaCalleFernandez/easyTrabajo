@@ -248,6 +248,7 @@ Actualmente solo hay `AuthMiddleware` y comprobaciones manuales parciales.
 - [ ] Revalidar que `Atencion al Cliente` no puede crear, editar ni dar de baja empleados.
 - [x] Permisos minimos backend aplicados en `/api/partes` para bloquear escritura de `Atencion al Cliente` y limitar `Tecnico` a partes propios.
 - [x] Pruebas manuales de permisos de partes/albaranes documentadas como correctas para propiedad, creacion y reasignacion de `Tecnico`.
+- [x] Regresion manual de login, dashboard, avisos, clientes y partes registrada como correcta.
 - [x] Corregida y validada la deteccion del rol real `Tecnico` en permisos de partes (`0e2fa38`).
 - [x] Corregido y validado el bypass de apropiacion de avisos ajenos mediante `PUT` (`0e2fa38`).
 - [ ] Endpoints restantes documentan roles permitidos en codigo/rutas.
@@ -264,7 +265,8 @@ PEN-0005 sigue parcial porque falta autorizacion centralizada y validacion compl
 de endpoints restantes. Continuan pendientes una prueba real con segunda empresa,
 eliminar la normalizacion duplicada de roles, automatizar las pruebas, decidir si
 un tecnico puede dejar libre un aviso propio y limpiar de forma controlada los
-fixtures identificados de prueba.
+fixtures identificados de prueba. INC-0014 permanece abierta: el cierre formal
+con firma, hash, bloqueo y rectificacion no forma parte de esta validacion.
 
 ---
 
