@@ -2,6 +2,7 @@ import { inject, Injectable, signal } from '@angular/core';
 import { Cliente } from '../interfaces/cliente.interfaces';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { API_BASE_URL } from '../config/api.config';
 
 
 
@@ -11,7 +12,7 @@ import { firstValueFrom } from 'rxjs';
 
 export class ClientesService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost/easyTrabajo/backend/public/api';
+  private apiUrl = API_BASE_URL;
   // Usamos un Signal para guardar la lista de clientes reactivamente
   public clientes = signal<Cliente[]>([]);
 

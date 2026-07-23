@@ -1,0 +1,432 @@
+erDiagram
+
+    PLAN ||--o{ SUSCRIPCION : "define"
+    EMPRESA ||--o{ SUSCRIPCION : "contrata"
+
+    EMPRESA ||--o{ EMPRESA_USUARIO : "vincula"
+    USUARIO ||--o{ EMPRESA_USUARIO : "pertenece_a"
+    EMPLEADO ||--o{ EMPRESA_USUARIO : "puede_tener_acceso"
+
+    EMPRESA_USUARIO ||--o{ EMPRESA_USUARIO_ROL : "tiene"
+    ROL ||--o{ EMPRESA_USUARIO_ROL : "asigna"
+
+    EMPRESA ||--o{ DEPARTAMENTO : "organiza"
+    EMPRESA ||--o{ EMPLEADO : "tiene"
+    DEPARTAMENTO ||--o{ EMPLEADO : "agrupa"
+    EMPLEADO ||--o{ EQUIPO : "puede_dirigir"
+    EQUIPO ||--o{ EQUIPO_EMPLEADO : "incluye"
+    EMPLEADO ||--o{ EQUIPO_EMPLEADO : "participa"
+
+    EMPRESA ||--o{ CLIENTE : "gestiona"
+    EMPRESA ||--o{ AVISO : "contiene"
+    CLIENTE ||--o{ AVISO : "solicita"
+    USUARIO ||--o{ AVISO : "crea"
+    DEPARTAMENTO ||--o{ AVISO : "puede_recibir"
+
+    AVISO ||--o{ AVISO_EMPLEADO : "asigna"
+    EMPLEADO ||--o{ AVISO_EMPLEADO : "trabaja_en"
+
+    EMPRESA ||--o{ PRESUPUESTO : "emite"
+    CLIENTE ||--o{ PRESUPUESTO : "recibe"
+    USUARIO ||--o{ PRESUPUESTO : "crea"
+    AVISO ||--o{ PRESUPUESTO : "puede_tener"
+    PRESUPUESTO ||--o{ PRESUPUESTO_LINEA : "contiene"
+    MATERIAL ||--o{ PRESUPUESTO_LINEA : "puede_referenciar"
+    PRESUPUESTO ||--o{ PRESUPUESTO_HISTORIAL_ESTADO : "registra"
+    USUARIO ||--o{ PRESUPUESTO_HISTORIAL_ESTADO : "cambia_estado"
+
+    AVISO ||--o{ PARTE_TRABAJO : "genera"
+    EMPRESA ||--o{ PARTE_TRABAJO : "contiene"
+    CLIENTE ||--o{ PARTE_TRABAJO : "relacionado"
+    PRESUPUESTO ||--o{ PARTE_TRABAJO : "puede_originar"
+
+    PARTE_TRABAJO ||--o{ PARTE_EMPLEADO : "incluye"
+    EMPLEADO ||--o{ PARTE_EMPLEADO : "participa"
+
+    PARTE_TRABAJO ||--o{ PARTE_HORA : "registra"
+    EMPLEADO ||--o{ PARTE_HORA : "realiza"
+
+    PARTE_TRABAJO ||--o{ PARTE_MATERIAL : "usa"
+    MATERIAL ||--o{ PARTE_MATERIAL : "puede_referenciar"
+
+    PARTE_TRABAJO ||--o{ PARTE_FIRMA : "firma"
+    PARTE_TRABAJO ||--o{ PARTE_HASH : "genera"
+    PARTE_TRABAJO ||--o{ PARTE_RECTIFICACION : "puede_rectificar"
+
+    EMPRESA ||--o{ MATERIAL : "tiene"
+    MATERIAL ||--o{ MOVIMIENTO_ALMACEN : "mueve"
+
+    EMPRESA ||--o{ EXPORTACION_FACTURACION : "exporta"
+    PARTE_TRABAJO ||--o{ EXPORTACION_FACTURACION : "puede_exportarse"
+    PRESUPUESTO ||--o{ EXPORTACION_FACTURACION : "puede_exportarse"
+    SUSCRIPCION ||--o{ EXPORTACION_FACTURACION : "puede_exportarse"
+
+    EMPRESA ||--o{ AUDITORIA_EVENTO : "registra"
+    USUARIO ||--o{ AUDITORIA_EVENTO : "realiza"
+
+    PLAN {
+        int id_plan PK
+        varchar nombre
+        enum tipo
+        int min_usuarios
+        int max_usuarios
+        int max_avisos
+        int max_partes
+        int max_clientes
+        decimal precio_mensual
+        boolean requiere_contacto_comercial
+        boolean activo
+        datetime created_at
+        datetime updated_at
+    }
+
+    SUSCRIPCION {
+        int id_suscripcion PK
+        int id_empresa FK
+        int id_plan FK
+        enum estado
+        datetime fecha_inicio
+        datetime fecha_fin
+        boolean renovacion_automatica
+        datetime created_at
+        datetime updated_at
+    }
+
+    EMPRESA {
+        int id_empresa PK
+        varchar nombre
+        varchar nif
+        varchar email
+        varchar telefono
+        varchar direccion
+        varchar poblacion
+        varchar pais
+        boolean activa
+        datetime created_at
+        datetime updated_at
+        datetime deleted_at
+    }
+
+    USUARIO {
+        int id_usuario PK
+        varchar nombre
+        varchar email
+        varchar password_hash
+        boolean activo_global
+        datetime ultimo_login_at
+        datetime created_at
+        datetime updated_at
+        datetime deleted_at
+    }
+
+    EMPRESA_USUARIO {
+        int id_empresa_usuario PK
+        int id_empresa FK
+        int id_usuario FK
+        int id_empleado FK
+        enum estado
+        boolean bloqueado
+        int bloqueado_por FK
+        datetime bloqueado_at
+        datetime created_at
+        datetime updated_at
+        datetime deleted_at
+    }
+
+    ROL {
+        int id_rol PK
+        varchar nombre
+        varchar descripcion
+        boolean activo
+        datetime created_at
+        datetime updated_at
+    }
+
+    EMPRESA_USUARIO_ROL {
+        int id_empresa_usuario_rol PK
+        int id_empresa_usuario FK
+        int id_rol FK
+        datetime created_at
+    }
+
+    DEPARTAMENTO {
+        int id_departamento PK
+        int id_empresa FK
+        int id_jefe_departamento FK
+        varchar nombre
+        boolean activo
+        datetime created_at
+        datetime updated_at
+        datetime deleted_at
+    }
+
+    EMPLEADO {
+        int id_empleado PK
+        int id_empresa FK
+        int id_departamento FK
+        varchar nombre
+        varchar apellido
+        varchar email
+        varchar telefono
+        varchar nif
+        boolean activo
+        datetime created_at
+        datetime updated_at
+        datetime deleted_at
+    }
+
+    EQUIPO {
+        int id_equipo PK
+        int id_empresa FK
+        int id_departamento FK
+        int id_jefe_equipo FK
+        varchar nombre
+        boolean activo
+        datetime created_at
+        datetime updated_at
+        datetime deleted_at
+    }
+
+    EQUIPO_EMPLEADO {
+        int id_equipo_empleado PK
+        int id_equipo FK
+        int id_empleado FK
+        datetime created_at
+    }
+
+    CLIENTE {
+        int id_cliente PK
+        int id_empresa FK
+        varchar nombre
+        varchar nif
+        varchar email
+        varchar telefono
+        varchar direccion
+        varchar poblacion
+        varchar contacto
+        boolean activo
+        datetime created_at
+        datetime updated_at
+        datetime deleted_at
+    }
+
+    AVISO {
+        int id_aviso PK
+        int id_empresa FK
+        int id_cliente FK
+        int id_departamento FK
+        int id_usuario_creador FK
+        varchar titulo
+        text descripcion
+        enum prioridad
+        enum estado
+        datetime fecha_alta
+        datetime fecha_prevista
+        datetime fecha_cierre
+        datetime created_at
+        datetime updated_at
+        datetime deleted_at
+    }
+
+    AVISO_EMPLEADO {
+        int id_aviso_empleado PK
+        int id_aviso FK
+        int id_empleado FK
+        int asignado_por FK
+        varchar rol_en_aviso
+        datetime fecha_asignacion
+        boolean activo
+    }
+
+    PRESUPUESTO {
+        int id_presupuesto PK
+        int id_empresa FK
+        int id_cliente FK
+        int id_aviso FK
+        int id_usuario_creador FK
+        varchar numero_presupuesto
+        varchar titulo
+        text descripcion
+        enum estado
+        datetime fecha_emision
+        datetime fecha_validez
+        decimal subtotal
+        decimal descuento
+        decimal impuestos
+        decimal total
+        datetime aceptado_at
+        datetime rechazado_at
+        datetime convertido_en_parte_at
+        text observaciones
+        datetime created_at
+        datetime updated_at
+        datetime deleted_at
+    }
+
+    PRESUPUESTO_LINEA {
+        int id_presupuesto_linea PK
+        int id_presupuesto FK
+        int id_material FK
+        enum tipo
+        text descripcion
+        decimal cantidad
+        decimal precio_unitario
+        decimal descuento
+        decimal impuesto
+        decimal total
+        int orden
+    }
+
+    PRESUPUESTO_HISTORIAL_ESTADO {
+        int id_historial PK
+        int id_presupuesto FK
+        int id_usuario FK
+        enum estado_anterior
+        enum estado_nuevo
+        text motivo
+        datetime created_at
+    }
+
+    PARTE_TRABAJO {
+        int id_parte_trabajo PK
+        int id_empresa FK
+        int id_aviso FK
+        int id_cliente FK
+        int id_presupuesto FK
+        text descripcion
+        enum estado
+        datetime fecha_inicio
+        datetime fecha_fin
+        decimal horas_total
+        text observaciones
+        boolean facturado
+        datetime facturado_at
+        datetime cerrado_at
+        int cerrado_por FK
+        datetime rectificable_hasta
+        boolean bloqueado_definitivo
+        datetime created_at
+        datetime updated_at
+        datetime deleted_at
+    }
+
+    PARTE_EMPLEADO {
+        int id_parte_empleado PK
+        int id_parte_trabajo FK
+        int id_empleado FK
+        varchar rol_en_parte
+        datetime created_at
+    }
+
+    PARTE_HORA {
+        int id_parte_hora PK
+        int id_parte_trabajo FK
+        int id_empleado FK
+        datetime fecha_inicio
+        datetime fecha_fin
+        decimal horas
+        varchar tipo_hora
+        datetime created_at
+    }
+
+    MATERIAL {
+        int id_material PK
+        int id_empresa FK
+        varchar codigo
+        varchar nombre
+        text descripcion
+        varchar unidad
+        decimal precio_coste
+        decimal precio_venta
+        decimal stock_actual
+        boolean activo
+        datetime created_at
+        datetime updated_at
+        datetime deleted_at
+    }
+
+    PARTE_MATERIAL {
+        int id_parte_material PK
+        int id_parte_trabajo FK
+        int id_material FK
+        varchar descripcion_manual
+        decimal cantidad
+        decimal precio_unitario
+        decimal total
+        datetime created_at
+    }
+
+    MOVIMIENTO_ALMACEN {
+        int id_movimiento PK
+        int id_empresa FK
+        int id_material FK
+        enum tipo
+        decimal cantidad
+        varchar origen
+        int id_origen
+        datetime created_at
+    }
+
+    PARTE_FIRMA {
+        int id_parte_firma PK
+        int id_parte_trabajo FK
+        varchar ruta_archivo
+        varchar hash_firma
+        varchar algoritmo_hash
+        varchar nombre_firmante
+        varchar documento_firmante
+        datetime fecha_firma
+        varchar ip
+        varchar user_agent
+    }
+
+    PARTE_HASH {
+        int id_parte_hash PK
+        int id_parte_trabajo FK
+        varchar hash_actual
+        varchar hash_anterior
+        varchar algoritmo
+        text payload_firmado
+        int version
+        datetime created_at
+    }
+
+    PARTE_RECTIFICACION {
+        int id_rectificacion PK
+        int id_parte_trabajo FK
+        int id_usuario_solicita FK
+        int id_usuario_autoriza FK
+        text motivo
+        enum estado
+        datetime fecha_solicitud
+        datetime fecha_autorizacion
+        datetime fecha_limite
+    }
+
+    EXPORTACION_FACTURACION {
+        int id_exportacion PK
+        int id_empresa FK
+        varchar tipo_origen
+        int id_origen
+        varchar sistema_destino
+        enum estado
+        json payload_exportado
+        json respuesta_externa
+        datetime fecha_exportacion
+        datetime created_at
+    }
+
+    AUDITORIA_EVENTO {
+        int id_evento PK
+        int id_empresa FK
+        int id_usuario FK
+        varchar entidad
+        int entidad_id
+        varchar accion
+        text descripcion
+        json valores_anteriores
+        json valores_nuevos
+        varchar ip
+        varchar user_agent
+        datetime created_at
+    }

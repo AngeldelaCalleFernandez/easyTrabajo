@@ -2,13 +2,14 @@ import { inject, Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { ParteTrabajo } from '../interfaces/partes.interfaces';
+import { API_BASE_URL } from '../config/api.config';
 
 @Injectable({
   providedIn: 'root',
 })
 export class PartesService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost/easyTrabajo/backend/public/api';
+  private apiUrl = API_BASE_URL;
 
   public partes = signal<ParteTrabajo[]>([]);
 

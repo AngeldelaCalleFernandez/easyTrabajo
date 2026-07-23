@@ -2,13 +2,14 @@ import { inject, Injectable, signal } from '@angular/core';
 import { Tarea } from '../interfaces/avisos.interfaces';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { API_BASE_URL } from '../config/api.config';
 
 @Injectable({
   providedIn: 'root',
 })
 export class TareasService {
   private http=inject(HttpClient);
-  private apiUrl='http://localhost/easyTrabajo/backend/public/api';
+  private apiUrl = API_BASE_URL;
 
   public tareas = signal<Tarea[]>([]);
 
@@ -62,8 +63,15 @@ export class TareasService {
     await this.actualizarTarea(idTarea,{estado: 'Finalizada'});
   }
 
-  async cancelarTarea(idTarea:number){
-    await this.actualizarTarea(idTarea,{estado:'Cancelada'});
+  async cancelarTarea(idTarea:number): Promise<boolean>{
+    try {
+      await firstValueFrom(this.http.put(`${this.apiUrl}/avisos/${idTarea}/cancelar`, {}));
+      this.cargarTareas();
+      return true;
+    } catch (error) {
+      console.error("Error al cancelar la tarea:", error);
+      return false;
+    }
   }
 
   //ELIMINAR TAREA

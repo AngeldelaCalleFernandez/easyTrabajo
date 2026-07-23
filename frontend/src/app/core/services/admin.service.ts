@@ -2,13 +2,14 @@ import { inject, Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { Empleado, Rol, UsuarioAdmin } from '../interfaces/admin.interfaces';
+import { API_BASE_URL } from '../config/api.config';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AdminService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost/easyTrabajo/backend/public/api';
+  private apiUrl = API_BASE_URL;
 
   public roles = signal<Rol[]>([]);
   public empleados = signal<Empleado[]>([]);

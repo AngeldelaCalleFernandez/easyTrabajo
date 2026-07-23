@@ -53,6 +53,15 @@ export default class Clientes implements OnInit {
   public authService = inject(AuthService);
   public alertService = inject(AlertService);
 
+  esTecnico(): boolean {
+    const rol = this.authService.usuarioActual()?.rol_nombre;
+    return rol === 'Tecnico' || rol === 'Técnico' || rol === 'TÃ©cnico';
+  }
+
+  puedeGestionarClientes(): boolean {
+    return !this.esTecnico();
+  }
+
   // El Molde del formulario de cliente
   public clienteForm = this.fb.group({
     nif: ['', [Validators.required, Validators.minLength(9), Validators.maxLength(9)]], // El NIF español tiene 9 letras/números
@@ -70,6 +79,8 @@ export default class Clientes implements OnInit {
 
   // Funciones del formulario
   toggleFormulario() {
+    if (!this.puedeGestionarClientes()) return;
+
     this.mostrarFormulario.update(v => !v);
     if (!this.mostrarFormulario()) {
       // Al cerrar, limpiamos pero dejamos el prefijo por defecto en 34 y la cuota en false
@@ -79,6 +90,8 @@ export default class Clientes implements OnInit {
   }
   //Rellena el formulario con los datos del cliente y lo abre
   abrirEditar(cliente: any) {
+    if (!this.puedeGestionarClientes()) return;
+
     this.idClienteEditando.set(cliente.id_cliente); // Encendemos el modo edición con este ID
 
     this.clienteForm.patchValue({
@@ -96,6 +109,8 @@ export default class Clientes implements OnInit {
     this.mostrarFormulario.set(true);
   }
  async guardarCliente() {
+  if (!this.puedeGestionarClientes()) return;
+
   if (this.clienteForm.invalid) return;
 
   const datosFormulario = this.clienteForm.value;
@@ -122,6 +137,8 @@ export default class Clientes implements OnInit {
   }
 }
   borrarCliente(id: number) {
+    if (!this.puedeGestionarClientes()) return;
+
     this.alertService.confirmar(
       '¿Dar de baja al cliente?',
       '¿Estás seguro que quieres dar de baja al cliente? No podrás deshacer esta acción.',

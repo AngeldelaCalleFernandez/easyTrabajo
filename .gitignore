@@ -1,0 +1,82 @@
+# =========================
+# Variables de entorno
+# =========================
+.env
+.env.*
+!.env.example
+backend/.env
+backend/.env.*
+!backend/.env.example
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
+
+# =========================
+# Node / Angular
+# =========================
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+frontend/.cache/
+frontend/coverage/
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/pnpm-debug.log*
+
+# =========================
+# PHP / Composer
+# =========================
+backend/vendor/
+composer.lock
+
+# =========================
+# Logs
+# =========================
+*.log
+logs/
+backend/logs/
+frontend/logs/
+
+# =========================
+# Archivos generados del sistema
+# =========================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# =========================
+# IDE / Editor
+# =========================
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Mantener .vscode si contiene configuración útil del proyecto.
+# Si prefieres no subirlo, descomenta:
+# .vscode/
+
+# =========================
+# Archivos temporales
+# =========================
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+
+# =========================
+# Estructuras generadas manualmente
+# =========================
+tree.txt
+estructura_proyecto.txt
+
+# =========================
+# Backups y dumps sensibles
+# =========================
+*.sql.gz
+*.zip
+*.rar
+*.7z
+backup/
+backups/

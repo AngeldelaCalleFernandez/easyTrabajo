@@ -29,8 +29,7 @@ export default class Administracion implements OnInit {
     apellido: ['', [Validators.required]],
     apellido_2: [''],
     nif: [''],
-    movil: [''],
-    id_empresa: [1]
+    movil: ['']
   });
 
   // Formulario de Usuarios
@@ -39,8 +38,7 @@ export default class Administracion implements OnInit {
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(4)]],
     id_rol: [null as number | null, [Validators.required]],
-    id_empleado: [null as number | null],
-    id_empresa: [1]
+    id_empleado: [null as number | null]
   });
 
   ngOnInit() {
@@ -100,8 +98,8 @@ export default class Administracion implements OnInit {
   toggleFormulario() {
     this.mostrarFormulario.update(v => !v);
     if (!this.mostrarFormulario()) {
-      this.empleadoForm.reset({ id_empresa: 1 });
-      this.usuarioForm.reset({ id_empresa: 1, id_rol: null, id_empleado: null });
+      this.empleadoForm.reset();
+      this.usuarioForm.reset({ id_rol: null, id_empleado: null });
       this.idEmpleadoEditando.set(null);
       this.idUsuarioEditando.set(null);
 
@@ -120,8 +118,7 @@ export default class Administracion implements OnInit {
       apellido: empleado.apellido,
       apellido_2: empleado.apellido_2,
       nif: empleado.nif,
-      movil: empleado.movil,
-      id_empresa: empleado.id_empresa
+      movil: empleado.movil
     });
     this.mostrarFormulario.set(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -169,8 +166,7 @@ editarUsuario(usuario: any) {
       nombre: usuario.nombre,
       email: usuario.email,
       id_rol: usuario.id_rol ? Number(usuario.id_rol) : null,
-      id_empleado: usuario.id_empleado ? Number(usuario.id_empleado) : null,
-      id_empresa: usuario.id_empresa
+      id_empleado: usuario.id_empleado ? Number(usuario.id_empleado) : null
     });
 
     this.usuarioForm.get('password')?.clearValidators();

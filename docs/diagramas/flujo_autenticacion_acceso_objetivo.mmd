@@ -1,0 +1,52 @@
+flowchart TD
+    A[Inicio de aplicación] --> B{¿Ruta pública?}
+
+    B -- Sí --> C[Pantalla pública / Login]
+    B -- No --> D{¿Usuario autenticado?}
+
+    C --> E[Formulario login]
+    E --> F[Enviar credenciales a API]
+    F --> G{¿Credenciales válidas?}
+    G -- No --> H[Mostrar error de acceso]
+    H --> E
+
+    G -- Sí --> I[Crear sesión/token]
+    I --> J[Cargar usuario actual]
+    J --> K{¿Usuario activo globalmente?}
+    K -- No --> KX[Acceso bloqueado: usuario inactivo]
+
+    K -- Sí --> L[Cargar empresas vinculadas]
+    L --> M{¿Tiene empresas disponibles?}
+    M -- No --> MX[Acceso bloqueado: sin empresa asignada]
+
+    M -- Sí --> N{¿Más de una empresa?}
+    N -- Sí --> O[Seleccionar empresa activa]
+    N -- No --> P[Asignar empresa activa]
+    O --> Q[Validar vínculo empresa_usuario]
+    P --> Q
+
+    Q --> R{¿Vínculo activo y no bloqueado?}
+    R -- No --> RX[Acceso bloqueado en esta empresa]
+
+    R -- Sí --> S{¿Empresa activa?}
+    S -- No --> SX[Acceso bloqueado: empresa inactiva]
+
+    S -- Sí --> T{¿Suscripción activa o prueba?}
+    T -- No --> TX[Pantalla suscripción inactiva]
+
+    T -- Sí --> U[Cargar roles y permisos]
+    U --> V{¿Ruta requiere rol?}
+    V -- No --> W[Acceso permitido]
+    V -- Sí --> X{¿Tiene permiso suficiente?}
+
+    X -- No --> Y[Acceso denegado]
+    X -- Sí --> W
+
+    W --> Z[Dashboard según rol]
+    Z --> Z1[Avisos]
+    Z --> Z2[Presupuestos]
+    Z --> Z3[Partes]
+    Z --> Z4[Clientes]
+    Z --> Z5[Administración]
+    Z --> Z6[Suscripción]
+    Z --> Z7[Auditoría si procede]
