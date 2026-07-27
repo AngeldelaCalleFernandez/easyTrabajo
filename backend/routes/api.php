@@ -100,8 +100,9 @@ if ($indice_api !== false && isset($partes_ruta[$indice_api + 1])) {
             $accion = isset($partes_ruta[$indice_api + 3]) ? $partes_ruta[$indice_api + 3] : null;
             $rolesCrearAviso = ['Administrador', 'Atencion al Cliente', 'Atención al Cliente', 'AtenciÃ³n al Cliente', 'Tecnico', 'Técnico', 'TÃ©cnico'];
 
-            if ($metodo === 'GET') {
-
+            if ($metodo === 'GET' && $id === 'empleados-asignables' && $accion === null) {
+                $avisoController->getAssignableEmployees($usuarioLogueado);
+            } elseif ($metodo === 'GET') {
                 $avisoController->getAll($usuarioLogueado);
             } elseif ($metodo === 'POST') {
                 if (!easyparte_user_has_role($usuarioLogueado, $rolesCrearAviso)) {
@@ -111,7 +112,12 @@ if ($indice_api !== false && isset($partes_ruta[$indice_api + 1])) {
                 $avisoController->create($datos, $usuarioLogueado);
             } elseif ($metodo === 'PUT' && $id && $accion === 'cancelar') {
                 $avisoController->cancel($id, $usuarioLogueado);
-            } elseif ($metodo === 'PUT' && $id) {
+            } elseif ($metodo === 'PUT' && $id && $accion === 'asignar') {
+                $datos = json_decode(file_get_contents("php://input"));
+                $avisoController->assign($id, $datos, $usuarioLogueado);
+            } elseif ($metodo === 'PUT' && $id && $accion === 'coger') {
+                $avisoController->takeFree($id, $usuarioLogueado);
+            } elseif ($metodo === 'PUT' && $id && $accion === null) {
                 $datos = json_decode(file_get_contents("php://input"));
                 $avisoController->update($id, $datos, $usuarioLogueado);
             } elseif ($metodo === 'DELETE' && $id) {
