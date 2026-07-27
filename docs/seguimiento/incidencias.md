@@ -652,6 +652,15 @@ Primera fase de PEN-0005 para avisos:
 Validacion documentada en:
 
 - `docs/testing/avisos_cancelacion.md`
+- `docs/testing/avisos_reasignacion.md` para la regresion ejecutada durante la
+  separacion de asignacion, toma y cancelacion.
+
+### Regresion 2026-07-27
+
+La persona responsable confirma que `PUT /api/avisos/{id}/cancelar` sigue
+funcionando después de separar los endpoints de asignación y toma de avisos.
+Las acciones validadas no realizan borrado físico. INC-0010 permanece
+`resuelta`; esta regresión no la reabre.
 
 ### Pruebas necesarias
 
@@ -662,7 +671,8 @@ Validacion documentada en:
 - [x] Bloquear cancelacion como Tecnico de aviso asignado a otro tecnico.
 - [x] Bloquear borrado fisico como Tecnico.
 - [x] Bloquear borrado fisico de aviso no cancelado.
-- [x] Permitir borrado fisico solo si estado = `Cancelada` y rol permitido.
+- [x] Mantener `DELETE /api/avisos/{id}` bloqueado para todos los roles en el
+  flujo actual.
 - [x] Verificar trazabilidad y ausencia de borrado fisico durante la cancelacion.
 - [x] Verificar que `PUT /api/avisos/{id}` con `estado = Cancelada` no permite saltarse permisos.
 - [x] Verificar que Atencion al Cliente lista avisos de su empresa.
@@ -823,12 +833,17 @@ Fecha: 2026-05-20
 
 ### Descripcion
 
-No se detecta tabla `auditoria_evento`, endpoint `/auditoria` ni servicio `AuditLogger`.
+En la auditoría inicial no se detectaban tabla `auditoria_evento`, endpoint
+`/auditoria` ni servicio `AuditLogger`. Desde julio de 2026 existe una primera
+infraestructura mínima aplicada al flujo de asignación de avisos, pero la
+cobertura general de acciones críticas sigue incompleta.
 
 ### Pasos para reproducir
 
-1. Revisar `bbdd/export_base_datos.sql`.
-2. Revisar `backend/`.
+1. Revisar la migracion de `auditoria_evento` y `AuditLogger`.
+2. Comprobar qué controladores generan eventos.
+3. Verificar que las acciones críticas restantes todavía no tienen cobertura
+   completa.
 
 ### Resultado esperado
 
@@ -836,26 +851,54 @@ Acciones criticas auditadas con usuario, empresa, entidad, accion y fecha.
 
 ### Resultado actual
 
-No hay auditoria persistente.
+Existe auditoría persistente parcial para asignar, reasignar y coger avisos. No
+existe todavía cobertura completa de clientes, roles, cierres de partes,
+cancelaciones y demás acciones críticas, ni se ha cerrado el diseño de consulta
+y protección de auditoría.
 
 ### Archivos o zonas afectadas
 
 - `bbdd/export_base_datos.sql`
-- `backend/`
+- `bbdd/migrations/20260723_crear_auditoria_evento.sql`
+- `backend/services/AuditLogger.php`
+- Controladores de acciones críticas todavía sin integrar.
 
 ### Riesgo
 
-No hay trazabilidad de cambios, cierres, roles, bajas ni accesos relevantes.
+No hay trazabilidad completa de cambios, cierres, roles, bajas ni accesos
+relevantes. La cobertura limitada a asignaciones de avisos no satisface todavía
+el alcance general.
 
 ### Propuesta de solucion
 
-Disenar e implementar auditoria en tarea separada de seguridad/trazabilidad.
+Extender la auditoria en tareas separadas de seguridad/trazabilidad hasta cubrir
+las acciones críticas y su consulta protegida.
+
+### Avance parcial 2026-07-27
+
+- La migración `bbdd/migrations/20260723_crear_auditoria_evento.sql` fue
+  aplicada en local por la persona responsable tras backup y prueba.
+- Existe `backend/services/AuditLogger.php` como implementación mínima.
+- La asignación y reasignación registra `aviso_asignado` o
+  `aviso_reasignado`.
+- Coger un aviso libre registra `aviso_autoasignado`.
+- Los eventos guardan empresa, usuario, entidad, entidad_id, acción, fecha y,
+  cuando procede, los valores anterior y nuevo de `id_empleado`.
+- La prueba manual confirma un evento persistente para la reasignación de un
+  aviso propio.
+- No se documentaron tokens, contraseñas ni secretos.
+
+Este avance se registra en `docs/testing/avisos_reasignacion.md`. INC-0013
+permanece `abierta` porque una acción auditada no acredita cobertura general.
 
 ### Pruebas necesarias
 
+- [x] Reasignar aviso y verificar evento persistente.
 - [ ] Crear cliente y verificar evento.
 - [ ] Cerrar parte y verificar evento.
 - [ ] Cambiar rol y verificar evento.
+- [ ] Verificar auditoría de cancelación y del resto de acciones críticas.
+- [ ] Probar aislamiento de auditoría con una segunda empresa.
 
 ---
 
@@ -1079,3 +1122,11 @@ Commit: `0e2fa38` (`security: bloquear acceso tecnico a avisos y partes ajenos`)
 - Las pruebas de permisos siguen siendo manuales.
 - Falta decidir si un técnico puede dejar sin asignar un aviso propio.
 - Los fixtures de prueba requieren una limpieza controlada posterior.
+
+### Evolución del contrato de asignación 2026-07-27
+
+La corrección de esta incidencia se mantiene: `PUT /api/avisos/{id}` no puede
+cambiar `id_empleado`. La reasignación autorizada se realiza ahora mediante
+`PUT /api/avisos/{id}/asignar`, con reglas separadas y auditoría. La persona
+responsable validó que un Técnico puede reasignar un aviso propio, pero no uno
+ajeno o cancelado ni a sí mismo. Esto no reabre INC-0017.

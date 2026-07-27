@@ -1,8 +1,9 @@
 # Matriz minima de permisos backend - PEN-0005
 
-Fecha: 2026-05-26
+Fecha inicial: 2026-05-26
+Última actualización: 2026-07-27
 Agente: Codex / agente backend-auditor EasyParte
-Estado: propuesta documental actualizada tras primera implementacion minima
+Estado: matriz actualizada; PEN-0005 permanece parcial
 
 ## Objetivo
 
@@ -16,6 +17,10 @@ Endpoints actuales revisados:
 
 - `GET|POST|PUT|DELETE /api/clientes`
 - `GET|POST|PUT|DELETE /api/avisos`
+- `GET /api/avisos/empleados-asignables`
+- `PUT /api/avisos/{id}/asignar`
+- `PUT /api/avisos/{id}/coger`
+- `PUT /api/avisos/{id}/cancelar`
 - `GET|POST|PUT /api/partes`
 - `GET|POST|PUT|DELETE /api/empleados`
 - `GET|POST|PUT|DELETE /api/usuarios`
@@ -66,9 +71,13 @@ Notas:
 | `/api/clientes/{id}` | PUT | Cualquier usuario autenticado | Actualiza por `id_empresa`. No valida rol. |
 | `/api/clientes/{id}` | DELETE | Cualquier usuario autenticado | Baja logica por `id_empresa`. No valida rol. |
 | `/api/avisos` | GET | Cualquier usuario autenticado | Filtra por empresa; Tecnico ve asignados o sin asignar. |
-| `/api/avisos` | POST | Cualquier usuario autenticado | Valida IDs relacionados por empresa, pero no rol. |
-| `/api/avisos/{id}` | PUT | Cualquier usuario autenticado | Filtra por empresa. Tecnico solo edita avisos propios o toma avisos libres para si; no puede apropiarse de avisos ajenos ni asignarlos a otro empleado. |
-| `/api/avisos/{id}` | DELETE | Cualquier usuario autenticado | Elimina fisicamente por empresa. No valida rol. |
+| `/api/avisos` | POST | Administrador, Atencion al Cliente y Tecnico | Valida IDs relacionados por empresa; Tecnico solo crea el aviso libre o asignado a si mismo. |
+| `/api/avisos/empleados-asignables` | GET | Administrador, Atencion al Cliente y Tecnico | Lista empleados activos de la empresa. Para Tecnico excluye su propio empleado. |
+| `/api/avisos/{id}` | PUT | Usuario autenticado dentro de su alcance | Edita datos generales y conserva la asignacion actual; `id_empleado` ya no cambia por este contrato. |
+| `/api/avisos/{id}/asignar` | PUT | Administrador y Atencion al Cliente; Tecnico condicionado | Asigna o reasigna dentro de la empresa. Tecnico solo puede mover un aviso propio a otro empleado, no uno libre, ajeno, cancelado ni a si mismo. |
+| `/api/avisos/{id}/coger` | PUT | Solo Tecnico | Toma un aviso libre usando el `id_empleado` del contexto autenticado. |
+| `/api/avisos/{id}/cancelar` | PUT | Administrador y Atencion al Cliente; Tecnico condicionado | Tecnico solo cancela avisos propios. Conserva el registro. |
+| `/api/avisos/{id}` | DELETE | Ningun rol en el flujo actual | Devuelve 403 para evitar borrado fisico. |
 | `/api/partes` | GET | Cualquier usuario autenticado | Filtra por empresa; Tecnico ve solo sus partes. |
 | `/api/partes` | POST | Cualquier usuario autenticado | Tecnico queda forzado a su `id_empleado`; otros roles pueden indicar empleado. |
 | `/api/partes/{id}` | PUT | Administrador o Tecnico autorizado | Tecnico solo actualiza partes propios; Atencion al Cliente recibe 403. |
@@ -94,9 +103,13 @@ Convencion:
 | Dar de baja cliente | Si | Si | No | Baja logica permitida para Atencion al Cliente tras decision funcional revisada. |
 | Listar avisos | Si | Si | Parcial | Atencion al Cliente ve todos los avisos de su empresa; Tecnico solo asignados o sin asignar, como comportamiento actual. |
 | Crear aviso | Si | Si | Parcial | Tecnico puede crear avisos libres o asignados a su propio `id_empleado`; no puede asignarlos a otro tecnico. |
-| Editar aviso | Si | Si | Parcial | Tecnico solo cambio operativo de aviso propio si se mantiene flujo actual; evitar reasignaciones libres. |
+| Editar datos generales del aviso | Si | Si | Parcial | El `PUT` general no cambia `id_empleado`; Tecnico queda limitado por propiedad. |
+| Listar empleados asignables para avisos | Si | Si | Parcial | Solo empleados activos de la empresa; para Tecnico se excluye su propio empleado. |
+| Asignar aviso libre a un empleado concreto | Si | Si | No | Usa `PUT /api/avisos/{id}/asignar`; Tecnico debe usar la accion separada Coger. |
+| Reasignar aviso ya asignado | Si | Si | Parcial | Tecnico solo puede reasignar un aviso propio, no cancelado, a otro empleado activo de su empresa y nunca a si mismo. |
+| Coger aviso libre | No | No | Parcial | Solo Tecnico mediante `PUT /api/avisos/{id}/coger`; el empleado se obtiene del contexto autenticado. |
 | Cancelar aviso | Si | Si | Parcial | Tecnico solo puede cancelar avisos asignados a el. No puede cancelar avisos sin asignar ni asignados a otros tecnicos. |
-| Borrar aviso fisicamente | Parcial | Parcial | No | Solo permitido a Administrador y Atencion al Cliente si el aviso ya esta cancelado. No borrar avisos no cancelados. |
+| Borrar aviso fisicamente | No | No | No | `DELETE /api/avisos/{id}` permanece bloqueado con 403; este flujo conserva el aviso. |
 | Listar partes/albaranes | Si | Si | Parcial | Tecnico solo partes propios; Atencion al Cliente consulta operativa. |
 | Crear parte | Si | No | Parcial | Tecnico solo para si mismo; si indica aviso, debe estar asignado al tecnico. Administrador puede crear/asignar dentro de su empresa. |
 | Editar/cerrar parte | Si | No | Parcial | Tecnico solo parte propio; Atencion al Cliente queda solo lectura. Cierre formal con firma/hash fuera de esta fase. |
@@ -128,7 +141,7 @@ Decision funcional revisada el 2026-05-26:
 - `Tecnico` puede listar clientes, pero sigue sin poder crear, editar ni dar de baja clientes.
 - `Administrador` conserva CRUD completo.
 
-Decision funcional sobre avisos pendiente de implementacion:
+Reglas actuales de avisos validadas:
 
 - Cancelar aviso y borrar aviso fisicamente son acciones distintas.
 - Cancelar aviso debe cambiar el estado a `Cancelada` y conservar trazabilidad.
@@ -137,10 +150,19 @@ Decision funcional sobre avisos pendiente de implementacion:
 - `Tecnico` no puede cancelar avisos sin asignar ni avisos asignados a otros tecnicos.
 - `Tecnico` puede crear avisos dentro de su alcance operativo; puede dejarlos libres o asignarlos a su propio `id_empleado`, pero no puede asignarlos a otro tecnico.
 - `Atencion al Cliente` puede listar empleados activos de su empresa como solo lectura para asignar avisos, pero no puede crear, editar ni dar de baja empleados.
-- El borrado fisico solo puede permitirse a `Administrador` y `Atencion al Cliente` cuando el aviso ya este cancelado.
+- El `PUT` general conserva `id_empleado`; asignar, reasignar y coger usan
+  endpoints especificos.
+- `Administrador` y `Atencion al Cliente` pueden asignar o reasignar avisos
+  dentro de su empresa.
+- `Tecnico` solo puede reasignar un aviso propio a otro empleado activo de su
+  empresa. No puede reasignar avisos ajenos o cancelados ni reasignarse a si
+  mismo.
+- `Tecnico` coge avisos libres mediante el endpoint especifico, sin indicar
+  otro empleado.
 - `Tecnico` no puede borrar fisicamente avisos.
-- No se debe borrar fisicamente un aviso que no este en estado `Cancelada`.
-- El estado actual del codigo no cumple esta separacion: `AvisoController::delete()` ejecuta `DELETE FROM tarea`.
+- Ningun rol puede borrar fisicamente avisos mediante el endpoint actual.
+- Las asignaciones correctas generan eventos de auditoria
+  `aviso_asignado`, `aviso_reasignado` o `aviso_autoasignado`.
 
 ## Validacion de seguridad 2026-07-13
 
@@ -156,6 +178,23 @@ Commit validado: `0e2fa38`.
 Permanecen pendientes la prueba con segunda empresa, la centralizacion de roles,
 la automatizacion de estas pruebas, la decision sobre liberar un aviso propio y
 la limpieza controlada de fixtures.
+
+## Validacion de reasignacion auditada 2026-07-27
+
+Resultados manuales registrados en
+`docs/testing/avisos_reasignacion.md`:
+
+- Tecnico reasigna correctamente un aviso propio.
+- Los intentos sobre aviso ajeno, aviso cancelado o destino igual al propio
+  empleado quedan bloqueados.
+- Administrador y Atencion al Cliente asignan o reasignan dentro de su empresa.
+- El `PUT` general no cambia `id_empleado`.
+- Coger un aviso libre y cancelar un aviso siguen usando acciones separadas.
+- La reasignacion correcta deja evento persistente en `auditoria_evento`.
+- Ninguna accion del flujo realiza borrado fisico.
+
+Quedan pendientes la prueba de reasignacion de aviso finalizado por API, una
+segunda empresa y la automatizacion. PEN-0005 y PEN-0009 continúan parciales.
 
 ## Permisos objetivo futuros
 

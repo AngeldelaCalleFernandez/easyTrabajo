@@ -135,18 +135,50 @@ Notas:
 
 ## 9. Avisos
 
-| Método | Ruta | Descripción | Roles |
-|---|---|---|---|
-| GET | /avisos | Listar avisos | según permisos |
-| POST | /avisos | Crear aviso | administrador_jefe, administrador, jefe_departamento, atencion_cliente |
-| GET | /avisos/{id} | Ver aviso | según permisos |
-| PATCH | /avisos/{id} | Editar aviso | según permisos |
-| PATCH | /avisos/{id}/estado | Cambiar estado | según permisos |
-| DELETE | /avisos/{id} | Cancelar/baja lógica | administrador_jefe, administrador |
-| POST | /avisos/{id}/empleados | Asignar técnico | administrador_jefe, administrador, jefe_departamento, jefe_equipo |
-| DELETE | /avisos/{id}/empleados/{empleadoId} | Quitar técnico | administrador_jefe, administrador, jefe_departamento |
-| GET | /avisos/{id}/partes | Partes del aviso | según permisos |
-| GET | /avisos/{id}/presupuestos | Presupuestos del aviso | según permisos |
+Esta sección distingue el contrato local actual, validado el 2026-07-27, del
+modelo REST objetivo descrito en otras secciones. Los roles actuales reales son
+`Administrador`, `Atencion al Cliente` y `Tecnico`.
+
+| Método | Ruta | Descripción actual | Roles actuales | Auditoría |
+|---|---|---|---|---|
+| GET | /avisos | Lista avisos de la empresa; Tecnico recibe los propios y los libres | Administrador, Atencion al Cliente, Tecnico | No |
+| GET | /avisos/empleados-asignables | Lista empleados activos de la empresa; para Tecnico excluye su propio empleado | Administrador, Atencion al Cliente, Tecnico | No |
+| POST | /avisos | Crea un aviso; Tecnico solo puede dejarlo libre o asignárselo a sí mismo | Administrador, Atencion al Cliente, Tecnico condicionado | Si hay asignación, registra el evento correspondiente |
+| PUT | /avisos/{id} | Edita datos generales sin cambiar `id_empleado` | Administrador, Atencion al Cliente, Tecnico dentro de su alcance | No registra reasignación |
+| PUT | /avisos/{id}/asignar | Asigna o reasigna a un empleado activo de la misma empresa | Administrador, Atencion al Cliente; Tecnico condicionado | `aviso_asignado` o `aviso_reasignado` |
+| PUT | /avisos/{id}/coger | Asigna un aviso libre al empleado del Tecnico autenticado | Solo Tecnico | `aviso_autoasignado` |
+| PUT | /avisos/{id}/cancelar | Cambia el estado a `Cancelada` y conserva el aviso | Administrador, Atencion al Cliente; Tecnico propietario | Fuera de la validación de auditoría de esta fase |
+| DELETE | /avisos/{id} | Bloqueado con 403; no forma parte del flujo de cancelación o reasignación | Ninguno | No |
+
+Payload de asignación o reasignación:
+
+```json
+{
+  "id_empleado": 123
+}
+```
+
+El valor anterior es únicamente ilustrativo. La API valida que el empleado
+destino esté activo y pertenezca a la empresa autenticada. No se deben
+documentar identificadores reales de usuarios o empresas.
+
+`PUT /avisos/{id}/coger` y `PUT /avisos/{id}/cancelar` no aceptan un
+`id_empleado` como autoridad del cliente. El primero obtiene el empleado desde
+el contexto autenticado y el segundo conserva la asignación existente.
+
+Reglas específicas de `PUT /avisos/{id}/asignar`:
+
+- Administrador y Atencion al Cliente pueden asignar o reasignar avisos de su
+  empresa.
+- Tecnico solo puede reasignar un aviso ya asignado a su propio empleado.
+- Tecnico no puede usarlo sobre avisos libres, ajenos o cancelados, ni indicar
+  su propio empleado como destino.
+- La operación correcta se ejecuta junto con el registro de auditoría.
+- La validación por API de un aviso finalizado queda pendiente.
+
+El modelo futuro con varios técnicos por aviso y recursos
+`/avisos/{id}/empleados` permanece como objetivo; no sustituye estos contratos
+actuales ni debe marcarse como implementado.
 
 ---
 
@@ -248,7 +280,8 @@ El almacén avanzado puede quedar para fase posterior.
 1. Ningún endpoint protegido debe ejecutarse sin usuario autenticado.
 2. Ningún endpoint debe confiar en `id_empresa` enviado por frontend como fuente de verdad.
 3. Los endpoints deben filtrar por empresa.
-4. Los técnicos solo ven datos asignados.
+4. Los técnicos ven los datos asignados a ellos y, en avisos, los avisos libres
+   habilitados para la acción Coger.
 5. Los administradores ven datos de su empresa.
 6. Los jefes ven datos de su ámbito.
 7. Las acciones críticas deben auditarse.
