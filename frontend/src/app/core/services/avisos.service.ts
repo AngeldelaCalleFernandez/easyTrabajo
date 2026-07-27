@@ -1,23 +1,47 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { Tarea } from '../interfaces/avisos.interfaces';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { API_BASE_URL } from '../config/api.config';
+
+export interface EmpleadoAsignable {
+  id_empleado: number;
+  nombre: string;
+  apellidos: string;
+}
+
+export interface ResultadoOperacionAviso {
+  exito: boolean;
+  estadoHttp?: number;
+}
+
+type DatosGeneralesAviso = Partial<
+  Pick<
+    Tarea,
+    | 'descripcion'
+    | 'importancia'
+    | 'estado'
+    | 'id_cliente'
+    | 'persona_contacto'
+    | 'telefono_contacto'
+  >
+>;
 
 @Injectable({
   providedIn: 'root',
 })
 export class TareasService {
-  private http=inject(HttpClient);
+  private http = inject(HttpClient);
   private apiUrl = API_BASE_URL;
 
   public tareas = signal<Tarea[]>([]);
+  public empleadosAsignables = signal<EmpleadoAsignable[]>([]);
 
   //OBTENER AVISOS
-  cargarTareas(){
+  cargarTareas() {
     this.http.get<Tarea[]>(`${this.apiUrl}/avisos`).subscribe({
-      next:(datosReales)=>this.tareas.set(datosReales),
-      error:(error)=>console.error("Error de cargar las tareas",error)
+      next: (datosReales) => this.tareas.set(datosReales),
+      error: () => console.error('No se han podido cargar los avisos.'),
     });
   }
 
@@ -25,64 +49,110 @@ export class TareasService {
     try {
       const datosReales = await firstValueFrom(this.http.get<Tarea[]>(`${this.apiUrl}/avisos`));
       this.tareas.set(datosReales);
-    } catch (error) {
-      console.error("Error de cargar las tareas", error);
+    } catch {
+      console.error('No se han podido cargar los avisos.');
+    }
+  }
+
+  async cargarEmpleadosAsignables(): Promise<ResultadoOperacionAviso> {
+    try {
+      const empleados = await firstValueFrom(
+        this.http.get<EmpleadoAsignable[]>(`${this.apiUrl}/avisos/empleados-asignables`),
+      );
+      this.empleadosAsignables.set(empleados);
+      return { exito: true };
+    } catch (error: unknown) {
+      this.empleadosAsignables.set([]);
+      console.error('No se han podido cargar los empleados asignables.');
+      return this.resultadoError(error);
     }
   }
 
   //CREAR AVISO
-  async agregarTarea(nuevaTarea: any): Promise<boolean> {
+  async agregarTarea(nuevaTarea: DatosGeneralesAviso): Promise<boolean> {
     try {
-      await firstValueFrom(this.http.post(`${this.apiUrl}/avisos`, nuevaTarea));
+      await firstValueFrom(
+        this.http.post(`${this.apiUrl}/avisos`, this.datosGenerales(nuevaTarea)),
+      );
       this.cargarTareas();
       return true;
-    } catch (error) {
-      console.error("Error al guardar la tarea:", error);
+    } catch {
+      console.error('No se ha podido guardar el aviso.');
       return false;
     }
   }
 
   //ACTUALIZAR AVISO
-  async actualizarTarea(id:number,datosTarea:any):Promise<boolean>{
-    try{
-      await firstValueFrom(this.http.put(`${this.apiUrl}/avisos/${id}`,datosTarea));
+  async actualizarTarea(id: number, datosTarea: DatosGeneralesAviso): Promise<boolean> {
+    try {
+      await firstValueFrom(
+        this.http.put(`${this.apiUrl}/avisos/${id}`, this.datosGenerales(datosTarea)),
+      );
       this.cargarTareas();
       return true;
-    }catch(error){
-      console.error("Error al actualizar la tarea", error);
+    } catch {
+      console.error('No se ha podido actualizar el aviso.');
       return false;
+    }
+  }
+
+  async asignarAviso(idAviso: number, idEmpleado: number): Promise<ResultadoOperacionAviso> {
+    try {
+      await firstValueFrom(
+        this.http.put(`${this.apiUrl}/avisos/${idAviso}/asignar`, {
+          id_empleado: idEmpleado,
+        }),
+      );
+      this.cargarTareas();
+      return { exito: true };
+    } catch (error: unknown) {
+      console.error('No se ha podido actualizar la asignación del aviso.');
+      return this.resultadoError(error);
+    }
+  }
+
+  async cogerAviso(idAviso: number): Promise<ResultadoOperacionAviso> {
+    try {
+      await firstValueFrom(this.http.put(`${this.apiUrl}/avisos/${idAviso}/coger`, {}));
+      this.cargarTareas();
+      return { exito: true };
+    } catch (error: unknown) {
+      console.error('No se ha podido coger el aviso.');
+      return this.resultadoError(error);
     }
   }
 
   //ESTADO DEL AVISO
-  async asignarTarea(idTarea:number,idEmpleado:number){
-    await this.actualizarTarea(idTarea,{id_empleado:idEmpleado,estado:'En proceso'});
+  async finalizarTarea(idTarea: number) {
+    await this.actualizarTarea(idTarea, { estado: 'Finalizada' });
   }
 
-  async finalizarTarea(idTarea:number){
-    await this.actualizarTarea(idTarea,{estado: 'Finalizada'});
-  }
-
-  async cancelarTarea(idTarea:number): Promise<boolean>{
+  async cancelarTarea(idTarea: number): Promise<ResultadoOperacionAviso> {
     try {
       await firstValueFrom(this.http.put(`${this.apiUrl}/avisos/${idTarea}/cancelar`, {}));
       this.cargarTareas();
-      return true;
-    } catch (error) {
-      console.error("Error al cancelar la tarea:", error);
-      return false;
+      return { exito: true };
+    } catch (error: unknown) {
+      console.error('No se ha podido cancelar el aviso.');
+      return this.resultadoError(error);
     }
   }
 
-  //ELIMINAR TAREA
-  async eliminarTarea(id: number): Promise<boolean> {
-    try {
-      await firstValueFrom(this.http.delete(`${this.apiUrl}/avisos/${id}`));
-      this.cargarTareas();
-      return true;
-    } catch (error) {
-      console.error("Error al eliminar la tarea:", error);
-      return false;
-    }
+  private datosGenerales(datos: DatosGeneralesAviso): DatosGeneralesAviso {
+    return {
+      descripcion: datos.descripcion,
+      importancia: datos.importancia,
+      estado: datos.estado,
+      id_cliente: datos.id_cliente,
+      persona_contacto: datos.persona_contacto,
+      telefono_contacto: datos.telefono_contacto,
+    };
+  }
+
+  private resultadoError(error: unknown): ResultadoOperacionAviso {
+    return {
+      exito: false,
+      estadoHttp: error instanceof HttpErrorResponse ? error.status : undefined,
+    };
   }
 }
