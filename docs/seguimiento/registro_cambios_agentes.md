@@ -679,3 +679,66 @@ Pruebas realizadas por Codex: revision de consistencia documental y validacion d
 Riesgos: PEN-0005 permanece parcial porque no existe todavia autorizacion centralizada completa. INC-0014 permanece abierta porque el cierre formal con firma, hash, bloqueo y rectificacion queda fuera de este alcance.
 Estado: documentacion validada
 Siguiente paso: Continuar PEN-0005 en una tarea separada sin cerrar INC-0014 hasta implementar y validar el cierre formal.
+
+---
+
+## CAMBIO-0030 - Documentación y pruebas de reasignación auditada de avisos
+
+Fecha: 2026-07-27
+Agente: Codex / agente documentación-auditor EasyParte
+Rama: security/clientes-role-check
+Tipo de cambio: documentación/testing
+Resumen: Se registra la validación manual del flujo separado de edición,
+asignación, reasignación, toma y cancelación de avisos. Se documenta el primer
+alcance persistente de auditoría para asignaciones sin presentar PEN-0009 como
+implementado.
+
+Archivos modificados:
+
+- `docs/contexto/reglas_de_negocio.md`
+- `docs/contexto/matriz_permisos_backend.md`
+- `docs/contexto/endpoints_api.md`
+- `docs/arquitectura/trazabilidad_y_auditoria.md`
+- `docs/testing/avisos_reasignacion.md`
+- `docs/seguimiento/incidencias.md`
+- `docs/seguimiento/pendientes.md`
+- `docs/seguimiento/registro_cambios_agentes.md`
+
+Resultados manuales aportados:
+
+- La migración de `auditoria_evento` fue aplicada en local tras backup y
+  prueba.
+- Técnico puede reasignar un aviso propio y la operación deja evento
+  persistente.
+- Técnico no puede reasignar avisos ajenos o cancelados ni reasignarse a sí
+  mismo.
+- Administrador y Atención al Cliente pueden asignar o reasignar avisos de su
+  empresa.
+- El `PUT` general conserva `id_empleado`.
+- Coger y cancelar siguen funcionando mediante endpoints específicos.
+- El flujo no realiza borrado físico.
+
+Motivo: Alinear reglas, permisos, contratos y seguimiento con el estado
+validado de AVISOS-REASIGNACION-AUDITADA, manteniendo claramente separado el
+avance parcial de auditoría de la cobertura general todavía pendiente.
+
+Pruebas realizadas: Las pruebas funcionales y de base de datos fueron
+ejecutadas manualmente por la persona responsable; Codex solo registra los
+resultados aportados. Codex realizó revisión de coherencia documental,
+comprobación de rutas y nombres de eventos en modo solo lectura y validación del
+diff. No se ejecutó SQL y no se documentaron tokens, contraseñas ni secretos.
+
+Estados conservados o actualizados:
+
+- INC-0010 permanece `resuelta`.
+- INC-0013 permanece `abierta`.
+- INC-0017 permanece `resuelta y validada`.
+- PEN-0009 pasa de `pendiente` a `parcial`; no se marca como `implementado`.
+
+Riesgos: Falta validar por API la reasignación de avisos finalizados, repetir la
+matriz con una segunda empresa, automatizar pruebas y extender auditoría al
+resto de acciones críticas.
+
+Estado: validado
+Siguiente paso: Abordar la cobertura restante de PEN-0009 en una tarea separada
+sin cerrar INC-0013 hasta disponer de auditoría general validada.

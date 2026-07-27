@@ -415,18 +415,21 @@ Cerrar decisiones de plan Free/precios antes de implementar.
 
 Tipo: seguridad
 Prioridad: critica
-Estado: pendiente
+Estado: parcial
 Relacionado con: INC-0013
 Detectado por: Codex auditor tecnico
 Fecha: 2026-05-20
 
 ### Descripcion
 
-Crear `auditoria_evento` y un `AuditLogger` para acciones criticas.
+Extender `auditoria_evento` y `AuditLogger` desde el primer alcance aplicado a
+avisos hasta cubrir todas las acciones criticas.
 
 ### Motivo
 
-No hay trazabilidad real de altas, bajas, cambios de rol, cierres ni cancelaciones.
+La asignacion de avisos ya dispone de trazabilidad persistente, pero siguen sin
+cobertura completa las altas, bajas, cambios de rol, cierres, cancelaciones y
+otras acciones criticas.
 
 ### Archivos o zonas afectadas
 
@@ -436,18 +439,40 @@ No hay trazabilidad real de altas, bajas, cambios de rol, cierres ni cancelacion
 
 ### Criterios de aceptacion
 
-- [ ] Eventos registran usuario, empresa, entidad, entidad_id, accion y fecha.
-- [ ] Valores anteriores/nuevos cuando proceda.
-- [ ] No se registran secretos ni passwords.
+- [x] Migracion minima de `auditoria_evento` aplicada en local tras backup y prueba.
+- [x] Eventos de asignacion de avisos registran usuario, empresa, entidad, entidad_id, accion y fecha.
+- [x] Asignacion y reasignacion guardan valores anteriores/nuevos de `id_empleado`.
+- [x] No se registraron ni documentaron secretos o passwords en esta validacion.
+- [x] Reasignacion de aviso validada manualmente con evento persistente.
 - [ ] Endpoints criticos generan eventos.
+- [ ] Auditoria aislada por empresa validada con una segunda empresa.
+- [ ] Pruebas de auditoria automatizadas.
+
+### Avance aplicado
+
+Fase `AVISOS-REASIGNACION-AUDITADA`:
+
+- La migracion `bbdd/migrations/20260723_crear_auditoria_evento.sql` fue
+  aplicada en local por la persona responsable después de backup y prueba.
+- `AuditLogger` registra la asignacion, reasignacion y toma de avisos.
+- Los eventos del alcance son `aviso_asignado`, `aviso_reasignado` y
+  `aviso_autoasignado`.
+- La reasignacion auditada fue validada manualmente y queda registrada en
+  `docs/testing/avisos_reasignacion.md`.
+- INC-0013 permanece abierta porque la infraestructura todavía no cubre todas
+  las acciones críticas.
 
 ### Riesgos
 
-Alto. Afecta seguridad y cumplimiento.
+Alto. La existencia de eventos para avisos no debe interpretarse como una
+auditoria completa del sistema.
 
 ### Siguiente paso
 
-Disenar tabla y servicio antes de conectar controladores.
+Extender `AuditLogger` de forma controlada a las demás acciones críticas,
+definir consulta/protección de eventos, ejecutar la prueba con una segunda
+empresa y automatizar la regresión. PEN-0009 no debe pasar a `implementado`
+hasta completar y validar esa cobertura.
 
 ---
 

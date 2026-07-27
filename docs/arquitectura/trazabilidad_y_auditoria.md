@@ -233,10 +233,43 @@ Esto permite saber exactamente qué cambió.
 - creación;
 - cambio de estado;
 - asignación de técnico;
+- reasignación de técnico;
+- toma de aviso libre por el técnico autenticado;
 - retirada de técnico;
 - cambio de prioridad;
 - cancelación;
 - finalización.
+
+## 7.1. Estado parcial implementado para avisos
+
+Actualización 2026-07-27:
+
+- La migración `bbdd/migrations/20260723_crear_auditoria_evento.sql` fue
+  aplicada en el entorno local por la persona responsable después de realizar
+  backup y prueba previa.
+- Existe un `AuditLogger` mínimo que persiste `id_empresa`, `id_usuario`,
+  `entidad`, `entidad_id`, `accion`, `valores_anteriores`,
+  `valores_nuevos` y `fecha`.
+- La asignación o reasignación mediante
+  `PUT /api/avisos/{id}/asignar` registra `aviso_asignado` o
+  `aviso_reasignado`.
+- Coger un aviso libre mediante `PUT /api/avisos/{id}/coger` registra
+  `aviso_autoasignado`.
+- Los valores anterior y nuevo registran el cambio de `id_empleado`.
+- La escritura del aviso y el registro de auditoría forman parte de la misma
+  operación transaccional: si el evento no puede persistirse, no debe
+  confirmarse el cambio.
+- La prueba manual confirma que una reasignación correcta deja un evento en
+  `auditoria_evento`.
+
+Este alcance es parcial. No demuestra auditoría completa de clientes, roles,
+partes, cierres, cancelaciones, autenticación u otras acciones críticas.
+INC-0013 permanece abierta y PEN-0009 queda en estado parcial.
+
+La tabla aplicada es una base mínima y no incluye todavía todos los campos
+recomendados en este documento, como `descripcion`, `ip` o `user_agent`.
+Añadirlos requiere una fase posterior revisada y no debe darse por
+implementado.
 
 ## Presupuestos
 
@@ -512,7 +545,7 @@ Para la primera versión profesional, se recomienda al menos el nivel recomendab
 
 ## 16. Recomendación de implementación
 
-Crear un servicio central:
+Existe una primera implementación central:
 
 ```txt
 AuditLogger
@@ -527,13 +560,16 @@ AuditLogger::registrar(
   entidad,
   entidadId,
   accion,
-  descripcion,
   valoresAnteriores,
   valoresNuevos
 )
 ```
 
-Crear también:
+La firma actual es mínima y todavía no incluye `descripcion`, IP ni user agent.
+Debe ampliarse progresivamente al resto de acciones críticas antes de considerar
+implementada la auditoría general.
+
+Crear también, cuando se aborde la integridad formal de partes:
 
 ```txt
 HashService

@@ -95,12 +95,39 @@ Reglas:
 2. Un aviso normalmente pertenece a un cliente.
 3. Un aviso puede estar vinculado a un departamento.
 4. Un aviso lo crea un usuario.
-5. Un aviso puede tener uno o varios técnicos asignados.
-6. La asignación de técnicos se realiza mediante `aviso_empleado`.
+5. En el modelo actual, un aviso está libre o tiene un único empleado en
+   `tarea.id_empleado`.
+6. La relación múltiple mediante `aviso_empleado` sigue siendo un objetivo
+   futuro y no debe presentarse como implementada.
 7. Un aviso puede estar inicialmente sin técnico asignado.
 8. Un aviso puede generar uno o varios partes de trabajo.
 9. Un aviso puede tener uno o varios presupuestos.
-10. Un aviso cancelado no debe eliminarse sin trazabilidad.
+10. Un aviso cancelado debe conservarse; cancelar, asignar, reasignar o coger un
+    aviso no implica borrado físico.
+
+Reglas actuales de asignación:
+
+1. La edición general mediante `PUT /api/avisos/{id}` no puede cambiar
+   `id_empleado`.
+2. Asignar o reasignar a un empleado concreto se realiza mediante
+   `PUT /api/avisos/{id}/asignar`.
+3. Coger un aviso libre es una acción distinta y usa
+   `PUT /api/avisos/{id}/coger`; el empleado procede del contexto autenticado.
+4. `Administrador` y `Atencion al Cliente` pueden asignar o reasignar avisos
+   dentro de su empresa a empleados activos de esa empresa.
+5. `Tecnico` solo puede reasignar un aviso que ya esté asignado a su propio
+   `id_empleado`, y debe elegir otro empleado activo de la misma empresa.
+6. `Tecnico` no puede reasignar avisos ajenos, libres, cancelados ni asignarse
+   el aviso a sí mismo.
+7. La interfaz oculta también la reasignación de avisos finalizados al
+   `Tecnico`; queda pendiente verificar por API que esta restricción se aplica
+   igualmente en backend.
+8. La asignación, reasignación y toma de aviso correctas registran auditoría con
+   la empresa, el usuario, el aviso y los valores anterior y nuevo de
+   `id_empleado`.
+9. Los rechazos de autorización deben producirse antes de modificar el aviso.
+10. La cancelación sigue siendo una acción independiente mediante
+    `PUT /api/avisos/{id}/cancelar`.
 
 Estados recomendados:
 
@@ -115,7 +142,8 @@ Reglas de visibilidad:
 - Administrador jefe y administrador pueden ver todos los avisos de su empresa.
 - Jefe de departamento puede ver avisos de su departamento.
 - Jefe de equipo puede ver avisos de su equipo.
-- Técnico solo debe ver avisos asignados a él.
+- En el modelo actual, Técnico puede ver sus avisos y los avisos libres que
+  puede coger; no debe ver avisos asignados a otros técnicos.
 - Atención al cliente puede ver y crear avisos según permisos de empresa.
 
 ---
