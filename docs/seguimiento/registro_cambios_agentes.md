@@ -742,3 +742,66 @@ resto de acciones críticas.
 Estado: validado
 Siguiente paso: Abordar la cobertura restante de PEN-0009 en una tarea separada
 sin cerrar INC-0013 hasta disponer de auditoría general validada.
+
+---
+
+## CAMBIO-0031 - Preparación de fixtures para avisos multiempresa
+
+Fecha: 2026-07-28
+Agente: Codex / agente testing-base de datos-documentación EasyParte
+Rama: master
+Tipo de cambio: testing/documentación/fixture local
+Resumen: Se prepara un seed dedicado y una matriz manual para validar el
+aislamiento de avisos, empleados asignables y eventos de reasignación auditada
+entre Empresa A y Empresa B. La tarea solo prepara artefactos; no ejecuta SQL ni
+registra resultados como superados.
+
+Archivos creados:
+
+- `bbdd/seed_avisos_reasignacion_multiempresa_pruebas.sql`
+- `docs/testing/avisos_reasignacion_multiempresa.md`
+
+Archivos actualizados:
+
+- `docs/testing/datos_prueba_multiempresa.md`
+- `docs/seguimiento/registro_cambios_agentes.md`
+
+Contenido preparado:
+
+- IDs de filas de fixture reservados entre `9201` y `9272`.
+- Dos empresas y departamentos.
+- Dos empleados activos por empresa.
+- Administrador y Técnico por empresa.
+- Técnico A vinculado a `9211` y Técnico B vinculado a `9221`.
+- Clientes y avisos específicos para pruebas positivas y negativas.
+- Preflight de colisiones y dependencias que evita inserciones parciales.
+- Hash bcrypt técnico/local sin contraseña en claro.
+- Rollback transaccional en orden de claves foráneas, empezando por
+  `auditoria_evento`.
+- Baseline de auditoría, matriz por rol, consultas de cruce y criterios de
+  éxito.
+
+Motivo: Permitir una prueba multiempresa reproducible de
+AVISOS-REASIGNACION-AUDITADA sin modificar backend, frontend, endpoints,
+migraciones, dump principal ni el seed multiempresa anterior.
+
+Pruebas realizadas: Revisión estática del esquema y las claves foráneas,
+revisión estática del SQL del fixture y `git diff --check`. No se ejecutó SQL,
+no se aplicó el seed y no se documentaron tokens, contraseñas ni secretos.
+
+Estados conservados:
+
+- INC-0013 permanece `abierta`.
+- PEN-0006 permanece `parcial`.
+- PEN-0009 permanece `parcial`.
+
+Riesgos: La preparación no acredita aislamiento real hasta ejecutar la matriz
+en local. Si existen colisiones, faltan los roles base o no está aplicada
+`auditoria_evento`, el fixture no debe importarse. La consulta de auditoría
+continúa siendo SQL local hasta disponer de un endpoint protegido y filtrado
+por empresa.
+
+Estado: pendiente de ejecución manual
+Siguiente paso: Realizar backup local, aplicar el seed manualmente, ejecutar
+primero las pruebas negativas y después las positivas, registrar resultados y
+usar el rollback exacto al finalizar.
