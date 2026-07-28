@@ -43,7 +43,7 @@ Rama de integración.
 
 Reglas:
 
-- recibe cambios de ramas feature, fix, refactor, docs y security;
+- recibe cambios de ramas feature, fix, refactor, docs, security y testing;
 - es la base obligatoria para crear nuevas ramas de trabajo ordinarias;
 - recibe como destino los Pull Requests ordinarios;
 - puede tener trabajo en curso, pero no debe estar completamente rota;
@@ -133,6 +133,17 @@ docs/agent-contexto-limpio
 docs/endpoints-api
 docs/despliegue-produccion
 docs/testing
+```
+
+## testing/*
+
+Para pruebas, fixtures y automatización de validaciones.
+
+Ejemplos:
+
+```txt
+testing/automatizar-avisos-multiempresa
+testing/regresion-permisos
 ```
 
 ## release/*
@@ -312,8 +323,14 @@ Ejemplos:
 Cada rama importante debería terminar en Pull Request.
 
 Los Pull Requests ordinarios de ramas `feature/*`, `fix/*`, `refactor/*`,
-`security/*`, `docs/*` y equivalentes deben apuntar a `develop`. Los Pull
-Requests hacia `master` se reservan para releases o hotfixes revisados.
+`security/*`, `docs/*`, `testing/*` y equivalentes deben apuntar a `develop`.
+Los Pull Requests hacia `master` se reservan para `release/*`, `hotfix/*` o
+promociones revisadas desde `develop`.
+
+Las protecciones recomendadas para ambas ramas, sus condiciones pendientes y
+la checklist de aplicación manual están definidas en
+[`proteccion_ramas.md`](proteccion_ramas.md). REP-GIT-002-DOC no aplica ni
+confirma reglas remotas.
 
 Plantilla recomendada:
 

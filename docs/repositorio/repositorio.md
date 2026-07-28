@@ -139,6 +139,7 @@ Documentos de Git:
 repositorio.md
 estrategia_ramas.md
 convenciones_commits.md
+proteccion_ramas.md
 ```
 
 ---
@@ -174,6 +175,7 @@ fix/*
 refactor/*
 docs/*
 security/*
+testing/*
 release/*
 hotfix/*
 ```
@@ -187,6 +189,7 @@ Resumen:
 - `refactor/*`: mejoras internas sin cambiar comportamiento.
 - `docs/*`: documentación.
 - `security/*`: cambios de seguridad.
+- `testing/*`: pruebas, fixtures y automatización de validaciones.
 - `release/*`: preparación de versión.
 - `hotfix/*`: correcciones urgentes sobre producción.
 
@@ -257,18 +260,27 @@ Destino:
 
 ## 12. Reglas de protección recomendadas
 
-Se recomienda proteger `master` y `develop`.
+REP-GIT-002-DOC define las recomendaciones completas en
+[`proteccion_ramas.md`](proteccion_ramas.md). No se ha confirmado ni modificado
+la protección remota.
 
-Reglas:
+Para ambas ramas se recomienda bloquear eliminación y force push, exigir Pull
+Request y resolución de conversaciones, mantener merge commits y no exigir
+historial lineal.
 
-- no permitir push directo a `master`;
-- evitar push directo a `develop` salvo operaciones administrativas
-  expresamente aprobadas, como REP-GIT-001;
-- exigir Pull Request;
-- exigir revisión humana;
-- exigir que el proyecto compile;
-- exigir checklist mínimo;
-- exigir backup si hay cambios de base de datos en producción.
+Además:
+
+- `master` se reserva para Pull Requests desde `release/*`, `hotfix/*` o
+  `develop`;
+- `develop` recibe los Pull Requests ordinarios desde `feature/*`, `fix/*`,
+  `refactor/*`, `security/*`, `docs/*` y `testing/*`;
+- las aprobaciones obligatorias quedan pendientes hasta confirmar un segundo
+  revisor real;
+- los status checks obligatorios quedan pendientes hasta crear y estabilizar
+  un `quality-gate`;
+- nunca debe activarse como obligatorio un check inexistente;
+- se recomienda borrar automáticamente las ramas fusionadas, con comprobaciones
+  adicionales para `release/*` y `hotfix/*`.
 
 ---
 
@@ -347,8 +359,10 @@ La decisión operativa queda cerrada:
 - los Pull Requests ordinarios apuntan a `develop`;
 - `master` se reserva para el estado estable.
 
-Continúa pendiente definir o confirmar las reglas de protección remota y el
-proceso formal de releases versionadas.
+REP-GIT-002 ha definido la protección recomendada, pero continúa pendiente
+inventariar y confirmar la configuración remota, aplicar los rulesets de forma
+manual, disponer de un segundo revisor real y crear un `quality-gate` estable.
+También continúa pendiente el proceso formal de releases versionadas.
 
 ---
 

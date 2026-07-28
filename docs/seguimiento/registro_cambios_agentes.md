@@ -989,3 +989,74 @@ Estado: validado documentalmente
 Siguiente paso: Usar el arnés como regresión controlada en local/test y abordar
 los pendientes restantes en tareas separadas, sin cerrar INC-0013 ni completar
 PEN-0006 o PEN-0009 de forma anticipada.
+
+---
+
+## CAMBIO-0035 - REP-GIT-002-DOC: protecciones recomendadas de ramas
+
+Fecha: 2026-07-28
+Agente: Codex / agente documentación EasyParte
+Rama: develop
+Tipo de cambio: documentación/repositorio
+Resumen: Se documentan las protecciones recomendadas para `master` y `develop`
+sin modificar la configuración remota de GitHub.
+
+Archivos creados:
+
+- `docs/repositorio/proteccion_ramas.md`
+
+Archivos modificados:
+
+- `docs/repositorio/estrategia_ramas.md`
+- `docs/repositorio/repositorio.md`
+- `docs/seguimiento/registro_cambios_agentes.md`
+
+Decisiones documentadas:
+
+- `master` permanece como rama estable y predeterminada.
+- `develop` permanece como rama de integración y destino de los Pull Requests
+  ordinarios.
+- Ambas ramas deben bloquear eliminación y force push, exigir Pull Request y
+  resolución de conversaciones, mantener merge commits y no exigir historial
+  lineal.
+- Los Pull Requests hacia `master` se reservan para `release/*`, `hotfix/*` o
+  `develop`.
+- `develop` acepta Pull Requests ordinarios desde `feature/*`, `fix/*`,
+  `refactor/*`, `security/*`, `docs/*` y `testing/*`.
+- Las aprobaciones obligatorias quedan pendientes hasta confirmar un segundo
+  revisor real.
+- Los status checks obligatorios quedan pendientes hasta crear y estabilizar un
+  `quality-gate`; no debe activarse un check inexistente.
+- Se recomienda el borrado automático de ramas fusionadas, con comprobaciones
+  específicas para `release/*` y `hotfix/*`.
+
+Se registran como candidatas a revisión, sin eliminarlas, las ramas:
+
+```txt
+origin/feature/avisos-reasignacion-auditada
+origin/security/clientes-role-check
+origin/security/tenant-minimo
+origin/testing/avisos-reasignacion-multiempresa
+```
+
+Alcance: No se creó ningún ruleset, no se modificó GitHub remoto, no se
+eliminaron ramas y no se hizo merge, push ni Pull Request. Tampoco se modificó
+código, backend, frontend ni base de datos.
+
+Estados funcionales conservados:
+
+- INC-0013 permanece `abierta`.
+- PEN-0006 permanece `parcial`.
+- PEN-0009 permanece `parcial`.
+
+Pruebas realizadas: revisión de coherencia documental, `git diff --check` y
+`git status`.
+
+Riesgos: La protección remota activa sigue sin confirmarse. Exigir aprobaciones
+sin un segundo revisor o exigir un check antes de estabilizarlo podría bloquear
+la integración.
+
+Estado: recomendación documentada, aplicación remota pendiente
+Siguiente paso: Inventariar manualmente **Settings → Rules → Rulesets**, crear
+y estabilizar el `quality-gate` y confirmar un segundo revisor antes de activar
+checks o aprobaciones obligatorias.
