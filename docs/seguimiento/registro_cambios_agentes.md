@@ -841,8 +841,10 @@ Resultados:
 - Consulta de eventos inesperados de las negativas con `0` resultados.
 - No se documentaron tokens ni contraseñas.
 
-Estado de datos local: El fixture y los cuatro eventos positivos permanecen en
-la base para revisión. No se ejecutó el rollback.
+Estado de datos local: Rollback ejecutado correctamente después de registrar
+los resultados. Quedaron `0` filas del fixture y `0` eventos relacionados; los
+`2` roles base permanecen intactos. El backup previo se conservó y su SHA-256
+volvió a verificarse correctamente.
 
 Estados conservados:
 
@@ -855,6 +857,6 @@ reasignación auditada, pero no sustituye una validación general de tenant ni d
 auditoría. La restauración del backup no se probó y la matriz aún no está
 automatizada.
 
-Estado: validado en local
-Siguiente paso: Revisar el diff documental, decidir si se conserva o revierte el
-fixture local y automatizar la matriz en una tarea separada.
+Estado: validado en local y limpiado
+Siguiente paso: Integrar la rama contra `master`, no contra `develop`, y
+automatizar la matriz en una tarea separada.

@@ -135,7 +135,11 @@ Restauración de prueba realizada: no
 Preflight: 0 colisiones, 0 dependencias faltantes, resultado OK
 Baseline de auditoría: 7
 Tokens o contraseñas documentados: no
-Rollback ejecutado: no; fixture conservado para revisión local
+Rollback ejecutado: sí; completado correctamente después de registrar resultados
+Filas restantes del fixture: 0
+Eventos relacionados restantes: 0
+Roles base intactos: 2
+Backup conservado y hash verificado: sí
 ```
 
 Recuentos obtenidos después de importar el fixture:
@@ -461,6 +465,11 @@ WHERE id_empresa IN (9201, 9202)
 ```
 
 Resultado esperado: `0`.
+
+Resultado obtenido en la ejecución local: `0`. El rollback se completó sin
+errores, no quedaron eventos relacionados y los dos roles base permanecieron
+intactos. El backup previo se conservó y su SHA-256 volvió a coincidir con el
+registrado.
 
 ## Pendientes
 
