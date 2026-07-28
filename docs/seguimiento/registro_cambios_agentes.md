@@ -921,3 +921,71 @@ de releases versionadas todavía deben confirmarse en una tarea separada.
 Estado: validado documentalmente
 Siguiente paso: Crear las próximas ramas desde `develop` y dirigir sus Pull
 Requests ordinarios a `develop`, manteniendo `master` como rama estable.
+
+---
+
+## CAMBIO-0034 - Cierre documental de TEST-AVISOS-ME-001
+
+Fecha: 2026-07-28
+Agente: Codex / agente documentación-testing EasyParte
+Rama: testing/automatizar-avisos-multiempresa
+Tipo de cambio: documentación/testing
+Resumen: Se registra la ejecución automatizada correcta del arnés PHP CLI de
+avisos y reasignación auditada multiempresa, manteniendo diferenciadas la
+validación manual previa y la nueva validación automatizada.
+
+Commit del arnés:
+
+```txt
+ca26b44 test: añade arnés de integración de avisos multiempresa
+```
+
+Archivos modificados:
+
+- `docs/testing/avisos_reasignacion_multiempresa.md`
+- `docs/seguimiento/registro_cambios_agentes.md`
+
+Resultados aportados:
+
+- `--preflight` correcto con exit code `0`.
+- `--run` correcto con exit code `0`.
+- Backup creado y verificado: `19.808` bytes.
+- SHA-256 del backup:
+  `DFC63B07BCD7D95C9CFC361B398CD56DA00CDF8962153D85EB9D713302C3171F`.
+- Fixture aplicado con los recuentos esperados.
+- Cuatro autenticaciones correctas.
+- Siete pruebas negativas y nueve positivas correctas.
+- Eventos de auditoría y controles de cruce multiempresa correctos.
+- Rollback completado correctamente.
+- Cero filas del fixture y cero eventos relacionados después de la limpieza.
+- Los dos roles base permanecieron intactos.
+- El repositorio quedó limpio y sincronizado.
+- No se documentaron tokens, contraseñas ni secretos.
+
+Motivo: Cerrar la fase documental de TEST-AVISOS-ME-001 dejando evidencia de
+que la matriz dispone tanto de ejecución manual validada como de ejecución
+automatizada validada.
+
+Pruebas realizadas por Codex en este cierre: ejecución de `--preflight` y
+`--run` en PowerShell local, verificación independiente de cero residuos y
+roles base intactos, revisión de coherencia documental, `git diff --check` y
+`git status`. Codex no modificó código, backend, frontend ni el arnés durante
+el cierre documental.
+
+Estados resultantes:
+
+- TEST-AVISOS-ME-001 queda `implementado y validado`.
+- INC-0013 permanece `abierta`.
+- PEN-0006 permanece `parcial`.
+- PEN-0009 permanece `parcial`.
+
+Riesgos: La matriz valida el aislamiento del alcance concreto de avisos,
+empleados asignables y auditoría de asignación, reasignación y toma. No acredita
+tenant general ni auditoría general. Siguen pendientes la prueba por API del
+aviso finalizado, la restauración de backup y un endpoint protegido de consulta
+de auditoría.
+
+Estado: validado documentalmente
+Siguiente paso: Usar el arnés como regresión controlada en local/test y abordar
+los pendientes restantes en tareas separadas, sin cerrar INC-0013 ni completar
+PEN-0006 o PEN-0009 de forma anticipada.

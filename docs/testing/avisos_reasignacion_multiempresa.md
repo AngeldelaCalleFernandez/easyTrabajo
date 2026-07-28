@@ -1,9 +1,9 @@
-# Validación manual — avisos y reasignación auditada multiempresa
+# Validación manual y automatizada — avisos y reasignación auditada multiempresa
 
 Fecha de preparación: 2026-07-28
 Entorno previsto: local/XAMPP
 Fase: AVISOS-REASIGNACION-MULTIEMPRESA
-Estado: ejecución local completada y validada
+Estado: ejecuciones manual y automatizada completadas y validadas
 
 ## Objetivo
 
@@ -17,9 +17,9 @@ Validar con dos empresas reales de prueba que:
 - no aparecen eventos cruzados entre empresas;
 - las peticiones rechazadas no modifican el aviso ni crean eventos.
 
-Este documento recoge la preparación y la ejecución local realizada. Los
-resultados obtenidos y la evidencia SQL no sensible quedan registrados en las
-secciones siguientes.
+Este documento recoge la preparación, la ejecución manual local y la ejecución
+automatizada posterior. Los resultados obtenidos y la evidencia no sensible
+quedan registrados en las secciones siguientes.
 
 ## Alcance y contratos
 
@@ -153,6 +153,47 @@ Recuentos obtenidos después de importar el fixture:
 | Usuario | 4 |
 | Usuario-rol | 4 |
 | Aviso | 7 |
+
+## Registro de ejecución automatizada
+
+El arnés de integración está implementado en:
+
+```txt
+tests/integration/avisos_reasignacion_multiempresa/
+```
+
+Commit del arnés:
+
+```txt
+ca26b44 test: añade arnés de integración de avisos multiempresa
+```
+
+Resultados aportados de la ejecución automatizada:
+
+```txt
+--preflight: correcto, exit code 0
+--run: correcto, exit code 0
+Backup: creado y verificado, 19.808 bytes
+SHA-256: DFC63B07BCD7D95C9CFC361B398CD56DA00CDF8962153D85EB9D713302C3171F
+Fixture: aplicado con los recuentos esperados
+Autenticaciones: 4 correctas
+Pruebas negativas: 7 correctas
+Pruebas positivas: 9 correctas
+Auditoría y controles de cruce multiempresa: correctos
+Rollback: correcto
+Filas restantes del fixture: 0
+Eventos relacionados restantes: 0
+Roles base intactos: 2
+Estado Git posterior: limpio y sincronizado
+Tokens o contraseñas documentados: no
+```
+
+Esta ejecución confirma que el arnés reproduce correctamente el alcance de la
+matriz manual: prepara el fixture, valida las cuatro sesiones, ejecuta primero
+los rechazos y después las operaciones permitidas, comprueba los eventos y los
+cruces y limpia los datos al terminar. El resultado no acredita tenant general
+ni auditoría general fuera de los avisos y operaciones incluidos en esta
+matriz. TEST-AVISOS-ME-001 queda implementado y validado.
 
 ## Baseline de auditoría y estado
 
@@ -411,6 +452,11 @@ negativas y las nueve positivas cumplen el resultado esperado. Los eventos
 creados son los identificadores 8–11; los tres controles de cruce y el control
 de eventos inesperados devuelven cero.
 
+Resultado de la ejecución automatizada: **matriz superada** con `--preflight`
+y `--run` en exit code `0`. Las cuatro autenticaciones, las siete pruebas
+negativas y las nueve positivas fueron correctas; los controles de auditoría y
+cruce también fueron correctos.
+
 ## Rollback
 
 El seed contiene al final un bloque comentado de rollback. Debe ejecutarse
@@ -471,14 +517,17 @@ errores, no quedaron eventos relacionados y los dos roles base permanecieron
 intactos. El backup previo se conservó y su SHA-256 volvió a coincidir con el
 registrado.
 
+Resultado obtenido en la ejecución automatizada: `0` filas del fixture y `0`
+eventos relacionados después del rollback. Los `2` roles base permanecieron
+intactos.
+
 ## Pendientes
 
 - Ejecutar por API la prueba de reasignación de un aviso finalizado.
-- Repetir esta matriz en el futuro mediante automatización.
+- Repetir periódicamente la matriz automatizada como regresión.
 - Implementar un endpoint protegido y filtrado por empresa para consultar
   auditoría; las consultas SQL de este documento son solo verificación local.
-- Automatizar la matriz ejecutada manualmente para prevenir regresiones.
 
 INC-0013 permanece abierta. PEN-0006 y PEN-0009 permanecen parciales: esta
-ejecución valida el alcance de avisos y reasignación de la matriz, pero no
-completa tenant ni auditoría general.
+validación manual y automatizada cubre el alcance de avisos y reasignación de la
+matriz, pero no completa tenant ni auditoría general.
