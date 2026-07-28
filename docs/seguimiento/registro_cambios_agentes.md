@@ -860,3 +860,64 @@ automatizada.
 Estado: validado en local y limpiado
 Siguiente paso: Integrar la rama contra `master`, no contra `develop`, y
 automatizar la matriz en una tarea separada.
+
+---
+
+## CAMBIO-0033 - REP-GIT-001-DOC: alineación de master y develop
+
+Fecha: 2026-07-28
+Agente: Codex / agente documentación EasyParte
+Rama: develop
+Tipo de cambio: documentación/repositorio
+Resumen: Se documenta el resultado de REP-GIT-001 y se reconcilia la
+estrategia escrita con los nombres y el flujo real del repositorio. La rama
+estable se llama `master`; `develop` vuelve a ser la rama de integración, base
+de nuevas ramas y destino de los Pull Requests ordinarios.
+
+Archivos modificados:
+
+- `docs/repositorio/estrategia_ramas.md`
+- `docs/repositorio/repositorio.md`
+- `docs/seguimiento/registro_cambios_agentes.md`
+
+Resultado técnico documentado:
+
+- `develop` estaba en `19c6d19`, era ancestro de `master` y no tenía commits
+  exclusivos.
+- `master` contenía 19 commits exclusivos.
+- `develop` avanzó hasta `61ab382` mediante fast-forward puro.
+- No se creó merge commit.
+- No se usó `reset`, `rebase` ni force push.
+- `master`, `origin/master`, `develop` y `origin/develop` quedaron en
+  `61ab3828ee56c936dc4e657ee92bba30eb86e1c3`.
+- La divergencia `origin/master...origin/develop` quedó en `0 0`.
+
+Reglas operativas registradas:
+
+- Las ramas de trabajo nuevas deben salir de `develop` actualizada.
+- Los Pull Requests ordinarios deben apuntar a `develop`.
+- Los Pull Requests hacia `master` se reservan para releases o hotfixes
+  revisados.
+- `master` permanece como rama estable y no debe usarse como rama ordinaria de
+  trabajo.
+
+Motivo: Evitar que vuelva a aparecer deuda entre las ramas principales y
+eliminar la contradicción documental que denominaba `main` a una rama que en el
+repositorio real se llama `master`.
+
+Pruebas realizadas: Revisión de coherencia de los tres documentos,
+`git diff --check` y `git status`. No se modificó código, backend, frontend,
+base de datos ni documentación funcional.
+
+Estados funcionales conservados:
+
+- INC-0013 permanece `abierta`.
+- PEN-0006 permanece `parcial`.
+- PEN-0009 permanece `parcial`.
+
+Riesgos: Las protecciones remotas de `master` y `develop` y el proceso formal
+de releases versionadas todavía deben confirmarse en una tarea separada.
+
+Estado: validado documentalmente
+Siguiente paso: Crear las próximas ramas desde `develop` y dirigir sus Pull
+Requests ordinarios a `develop`, manteniendo `master` como rama estable.

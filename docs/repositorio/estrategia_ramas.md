@@ -6,23 +6,28 @@
 
 Este documento define cómo deben usarse las ramas de Git en EasyParte.
 
-El objetivo es que la profesionalización del proyecto no se haga directamente sobre `main` y que cada cambio sea revisable, reversible y entendible.
+El objetivo es que la profesionalización del proyecto no se haga directamente sobre `master` y que cada cambio sea revisable, reversible y entendible.
 
 ---
 
 ## 2. Principio general
 
-No trabajar directamente en `main`.
+No trabajar directamente en `master`.
 
 Toda modificación debe hacerse en una rama concreta según el tipo de tarea.
+Las nuevas ramas de trabajo deben crearse desde `develop` actualizada.
 
 ---
 
 ## 3. Ramas principales
 
-## main
+## master
 
 Representa la versión estable del proyecto.
+
+`master` es el nombre real de esta rama en el repositorio. Las referencias
+históricas a `main` deben interpretarse y actualizarse como `master`; no existe
+una rama principal distinta llamada `main`.
 
 Reglas:
 
@@ -39,9 +44,27 @@ Rama de integración.
 Reglas:
 
 - recibe cambios de ramas feature, fix, refactor, docs y security;
+- es la base obligatoria para crear nuevas ramas de trabajo ordinarias;
+- recibe como destino los Pull Requests ordinarios;
 - puede tener trabajo en curso, pero no debe estar completamente rota;
 - se prueba antes de preparar una release;
 - sirve como base para nuevas ramas.
+
+## Estado tras REP-GIT-001
+
+El 2026-07-28 se corrigió la deuda entre las ramas principales:
+
+- `develop` estaba en `19c6d19` y era ancestro de `master`;
+- `master` contenía 19 commits exclusivos y `develop` no contenía ninguno;
+- `develop` avanzó mediante fast-forward puro de `19c6d19` a `61ab382`;
+- no se creó merge commit;
+- no se usó `reset`, `rebase` ni force push;
+- tras el push, `master`, `origin/master`, `develop` y `origin/develop`
+  apuntaban a `61ab3828ee56c936dc4e657ee92bba30eb86e1c3`;
+- la divergencia `origin/master...origin/develop` quedó en `0 0`.
+
+Esta alineación no convierte `master` en rama de trabajo. Restablece
+`develop` como rama de integración y base de las tareas siguientes.
 
 ---
 
@@ -142,7 +165,7 @@ hotfix/error-base-datos
 Flujo recomendado:
 
 ```txt
-main
+master
   ↓
 develop
   ↓
@@ -154,7 +177,7 @@ develop
   ↓
 release/x.y.z
   ↓
-main
+master
 ```
 
 ---
@@ -174,11 +197,11 @@ develop
 Para un bug crítico en producción:
 
 ```txt
-main
+master
   ↓
 hotfix/nombre-error
   ↓
-main
+master
   ↓
 develop
 ```
@@ -288,6 +311,10 @@ Ejemplos:
 
 Cada rama importante debería terminar en Pull Request.
 
+Los Pull Requests ordinarios de ramas `feature/*`, `fix/*`, `refactor/*`,
+`security/*`, `docs/*` y equivalentes deben apuntar a `develop`. Los Pull
+Requests hacia `master` se reservan para releases o hotfixes revisados.
+
 Plantilla recomendada:
 
 ```txt
@@ -317,33 +344,27 @@ Qué documentos se han actualizado.
 Cuando Codex trabaje:
 
 1. Debe crear o usar una rama concreta.
-2. No debe trabajar en `main`.
-3. No debe mezclar muchas tareas.
-4. Debe explicar los cambios.
-5. Debe dejar pasos de prueba.
-6. Debe actualizar documentación si procede.
-7. Debe pedir revisión para cambios críticos.
+2. Debe crear las ramas ordinarias desde `develop` actualizada.
+3. No debe trabajar directamente en `master` ni en `develop`.
+4. No debe mezclar muchas tareas.
+5. Debe explicar los cambios.
+6. Debe dejar pasos de prueba.
+7. Debe actualizar documentación si procede.
+8. Debe pedir revisión para cambios críticos.
 
 ---
 
-## 13. Estrategia recomendada inicial
+## 13. Inicio de una tarea nueva
 
-Para empezar la profesionalización:
-
-```bash
-git checkout main
-git pull
-git checkout -b develop
-git push -u origin develop
-```
-
-Luego crear ramas desde `develop`:
+Antes de crear una rama de trabajo:
 
 ```bash
-git checkout develop
-git pull
-git checkout -b docs/agent-contexto-limpio
+git switch develop
+git pull --ff-only origin develop
+git switch -c docs/agent-contexto-limpio
 ```
+
+La rama creada debe abrir su Pull Request ordinario contra `develop`.
 
 ---
 
@@ -365,9 +386,9 @@ feature/partes-firma-hash
 
 ---
 
-## 15. Cuándo fusionar a main
+## 15. Cuándo fusionar a master
 
-Solo fusionar a `main` cuando:
+Solo fusionar a `master` cuando:
 
 - la app compila;
 - backend responde;
@@ -411,5 +432,5 @@ La estrategia de ramas debe proteger el proyecto.
 Regla clave:
 
 ```txt
-Cambios pequeños, ramas claras, main estable.
+Cambios pequeños, ramas claras, `develop` integra y `master` permanece estable.
 ```

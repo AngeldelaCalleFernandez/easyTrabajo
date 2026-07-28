@@ -145,9 +145,10 @@ convenciones_commits.md
 
 ## 7. Norma principal de trabajo
 
-No trabajar directamente sobre `main`.
+No trabajar directamente sobre `master`.
 
-Toda tarea debe hacerse en una rama específica.
+Toda tarea debe hacerse en una rama específica creada desde `develop`
+actualizada.
 
 Ejemplos:
 
@@ -166,7 +167,7 @@ security/cors-produccion
 Ramas recomendadas:
 
 ```txt
-main
+master
 develop
 feature/*
 fix/*
@@ -179,7 +180,7 @@ hotfix/*
 
 Resumen:
 
-- `main`: versión estable.
+- `master`: versión estable y nombre real de la rama principal del repositorio.
 - `develop`: integración de cambios.
 - `feature/*`: nuevas funcionalidades.
 - `fix/*`: correcciones.
@@ -196,15 +197,17 @@ Resumen:
 Cualquier agente que trabaje sobre el repositorio debe cumplir:
 
 1. Leer documentación antes de tocar código.
-2. No modificar `main` directamente.
-3. Trabajar por tareas pequeñas.
-4. Explicar qué archivos va a tocar.
-5. No cambiar la arquitectura sin justificarlo.
-6. No inventar reglas de negocio.
-7. No eliminar código o columnas sin revisión humana.
-8. No introducir secretos.
-9. No exponer errores internos.
-10. Documentar cambios relevantes.
+2. Crear las ramas de trabajo ordinarias desde `develop` actualizada.
+3. No modificar directamente `master` ni `develop`.
+4. Dirigir los Pull Requests ordinarios a `develop`.
+5. Trabajar por tareas pequeñas.
+6. Explicar qué archivos va a tocar.
+7. No cambiar la arquitectura sin justificarlo.
+8. No inventar reglas de negocio.
+9. No eliminar código o columnas sin revisión humana.
+10. No introducir secretos.
+11. No exponer errores internos.
+12. Documentar cambios relevantes.
 
 ---
 
@@ -222,7 +225,7 @@ Flujo básico:
 7. Revisar diff.
 8. Fusionar a develop.
 9. Pasar pruebas.
-10. Preparar release hacia main.
+10. Preparar release hacia master.
 ```
 
 ---
@@ -242,15 +245,25 @@ Migraciones si afecta a base de datos
 Documentación actualizada
 ```
 
+Destino:
+
+- los Pull Requests ordinarios deben apuntar a `develop`;
+- los Pull Requests hacia `master` quedan reservados para releases y hotfixes
+  revisados;
+- una tarea nueva no debe usar `master` como base mientras `develop` esté
+  alineada y operativa.
+
 ---
 
 ## 12. Reglas de protección recomendadas
 
-Cuando el proyecto avance, se recomienda proteger `main`.
+Se recomienda proteger `master` y `develop`.
 
 Reglas:
 
-- no permitir push directo a `main`;
+- no permitir push directo a `master`;
+- evitar push directo a `develop` salvo operaciones administrativas
+  expresamente aprobadas, como REP-GIT-001;
 - exigir Pull Request;
 - exigir revisión humana;
 - exigir que el proyecto compile;
@@ -314,15 +327,28 @@ Los documentos estables de Drive pueden copiarse a `/AGENT` dentro del repositor
 
 ---
 
-## 16. Decisión pendiente
+## 16. Estado de las ramas principales
 
-Pendiente decidir:
+REP-GIT-001 se completó el 2026-07-28:
 
-- si se creará rama `develop`;
-- si se protegerá `main`;
-- si se trabajará con Pull Requests siempre;
-- si Codex trabajará directamente sobre ramas;
-- si habrá releases versionadas.
+- `develop` avanzó de `19c6d19` a `61ab382` mediante fast-forward puro;
+- `develop` no tenía commits exclusivos que rescatar;
+- no se creó merge commit;
+- no se usó `reset`, `rebase` ni force push;
+- `master`, `origin/master`, `develop` y `origin/develop` quedaron en
+  `61ab3828ee56c936dc4e657ee92bba30eb86e1c3`;
+- la divergencia remota quedó en `0 0`.
+
+La decisión operativa queda cerrada:
+
+- la rama estable real se llama `master`, no `main`;
+- `develop` es la rama de integración;
+- las ramas nuevas salen de `develop`;
+- los Pull Requests ordinarios apuntan a `develop`;
+- `master` se reserva para el estado estable.
+
+Continúa pendiente definir o confirmar las reglas de protección remota y el
+proceso formal de releases versionadas.
 
 ---
 
@@ -333,5 +359,5 @@ El repositorio debe tratarse como base técnica del producto, no como carpeta de
 La regla principal es:
 
 ```txt
-main se protege, develop integra, las ramas pequeñas cambian una cosa cada vez.
+master se protege, develop integra, las ramas pequeñas cambian una cosa cada vez.
 ```
