@@ -221,3 +221,39 @@ Resultado esperado: HTTP 201.
 El propio seed incluye un bloque inicial que borra solo los IDs `9101` y `9102` de las tablas afectadas. Tambien incluye al final un rollback comentado para eliminar esos datos manualmente.
 
 No ejecutar la limpieza en produccion.
+
+## Fixture dedicado de reasignación auditada de avisos
+
+Actualización: 2026-07-28
+
+Para validar el aislamiento de avisos, empleados asignables y eventos de
+auditoría se ha preparado un fixture independiente:
+
+```txt
+bbdd/seed_avisos_reasignacion_multiempresa_pruebas.sql
+```
+
+La guía de ejecución y su matriz están en:
+
+```txt
+docs/testing/avisos_reasignacion_multiempresa.md
+```
+
+Este fixture:
+
+- no modifica ni sustituye `bbdd/seed_multiempresa_pruebas.sql`;
+- no modifica `bbdd/export_base_datos.sql`;
+- reserva únicamente IDs de filas de prueba entre `9201` y `9272`;
+- crea dos empresas, dos empleados activos por empresa, Administrador y
+  Técnico por empresa, clientes y siete avisos;
+- vincula el Técnico A al empleado `9211` y el Técnico B al empleado `9221`;
+- no crea partes ni otros recursos fuera del alcance;
+- no contiene contraseñas en claro y reutiliza un hash técnico solo para
+  fixture local;
+- comprueba colisiones y dependencias antes de insertar;
+- no usa `FOREIGN_KEY_CHECKS=0`;
+- incluye rollback transaccional empezando por los eventos de auditoría.
+
+La importación y las pruebas permanecen pendientes. Preparar datos y
+documentación no demuestra todavía aislamiento multiempresa: INC-0013 sigue
+abierta y PEN-0006/PEN-0009 continúan parciales.

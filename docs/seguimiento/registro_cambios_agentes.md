@@ -742,3 +742,121 @@ resto de acciones críticas.
 Estado: validado
 Siguiente paso: Abordar la cobertura restante de PEN-0009 en una tarea separada
 sin cerrar INC-0013 hasta disponer de auditoría general validada.
+
+---
+
+## CAMBIO-0031 - Preparación de fixtures para avisos multiempresa
+
+Fecha: 2026-07-28
+Agente: Codex / agente testing-base de datos-documentación EasyParte
+Rama: master
+Tipo de cambio: testing/documentación/fixture local
+Resumen: Se prepara un seed dedicado y una matriz manual para validar el
+aislamiento de avisos, empleados asignables y eventos de reasignación auditada
+entre Empresa A y Empresa B. La tarea solo prepara artefactos; no ejecuta SQL ni
+registra resultados como superados.
+
+Archivos creados:
+
+- `bbdd/seed_avisos_reasignacion_multiempresa_pruebas.sql`
+- `docs/testing/avisos_reasignacion_multiempresa.md`
+
+Archivos actualizados:
+
+- `docs/testing/datos_prueba_multiempresa.md`
+- `docs/seguimiento/registro_cambios_agentes.md`
+
+Contenido preparado:
+
+- IDs de filas de fixture reservados entre `9201` y `9272`.
+- Dos empresas y departamentos.
+- Dos empleados activos por empresa.
+- Administrador y Técnico por empresa.
+- Técnico A vinculado a `9211` y Técnico B vinculado a `9221`.
+- Clientes y avisos específicos para pruebas positivas y negativas.
+- Preflight de colisiones y dependencias que evita inserciones parciales.
+- Hash bcrypt técnico/local sin contraseña en claro.
+- Rollback transaccional en orden de claves foráneas, empezando por
+  `auditoria_evento`.
+- Baseline de auditoría, matriz por rol, consultas de cruce y criterios de
+  éxito.
+
+Motivo: Permitir una prueba multiempresa reproducible de
+AVISOS-REASIGNACION-AUDITADA sin modificar backend, frontend, endpoints,
+migraciones, dump principal ni el seed multiempresa anterior.
+
+Pruebas realizadas: Revisión estática del esquema y las claves foráneas,
+revisión estática del SQL del fixture y `git diff --check`. No se ejecutó SQL,
+no se aplicó el seed y no se documentaron tokens, contraseñas ni secretos.
+
+Estados conservados:
+
+- INC-0013 permanece `abierta`.
+- PEN-0006 permanece `parcial`.
+- PEN-0009 permanece `parcial`.
+
+Riesgos: La preparación no acredita aislamiento real hasta ejecutar la matriz
+en local. Si existen colisiones, faltan los roles base o no está aplicada
+`auditoria_evento`, el fixture no debe importarse. La consulta de auditoría
+continúa siendo SQL local hasta disponer de un endpoint protegido y filtrado
+por empresa.
+
+Estado: pendiente de ejecución manual
+Siguiente paso: Realizar backup local, aplicar el seed manualmente, ejecutar
+primero las pruebas negativas y después las positivas, registrar resultados y
+usar el rollback exacto al finalizar.
+
+---
+
+## CAMBIO-0032 - Ejecución de matriz de avisos multiempresa
+
+Fecha: 2026-07-28
+Agente: Codex / agente testing-base de datos-documentación EasyParte
+Rama: testing/avisos-reasignacion-multiempresa-fixtures
+Tipo de cambio: testing/documentación/ejecución local
+Resumen: Se ejecuta en la base local `easyParte` la matriz manual de avisos y
+reasignación auditada entre dos empresas. La ejecución incluye backup completo,
+preflight, fixture, pruebas negativas, pruebas positivas y consultas SQL de
+integridad multiempresa.
+
+Archivo actualizado:
+
+- `docs/testing/avisos_reasignacion_multiempresa.md`
+- `docs/seguimiento/registro_cambios_agentes.md`
+
+Resultados:
+
+- Backup completo externo al directorio público creado y verificado mediante
+  tamaño, final correcto del volcado y SHA-256.
+- `auditoria_evento` y los roles base requeridos confirmados.
+- Preflight con `0` colisiones y `0` dependencias faltantes.
+- Fixture importado con los siete recuentos esperados.
+- Baseline de auditoría: `7`.
+- Siete pruebas negativas correctas, con estado persistente intacto y cero
+  eventos por rechazo.
+- Nueve pruebas positivas correctas.
+- Cuatro operaciones de escritura con HTTP 200 y eventos `8` a `11`.
+- Tres consultas de cruce entre evento, aviso, usuario y empleado con `0`
+  resultados.
+- Consulta de eventos inesperados de las negativas con `0` resultados.
+- No se documentaron tokens ni contraseñas.
+
+Estado de datos local: Rollback ejecutado correctamente después de registrar
+los resultados. Quedaron `0` filas del fixture y `0` eventos relacionados; los
+`2` roles base permanecen intactos. El backup previo se conservó y su SHA-256
+volvió a verificarse correctamente.
+
+Estados conservados:
+
+- INC-0013 permanece `abierta`.
+- PEN-0006 permanece `parcial`.
+- PEN-0009 permanece `parcial`.
+
+Riesgos: La matriz demuestra el aislamiento del alcance concreto de avisos y
+reasignación auditada, pero no sustituye una validación general de tenant ni de
+auditoría. La restauración del backup no se probó y la matriz aún no está
+automatizada.
+
+Estado: validado en local y limpiado
+Siguiente paso: Integrar la rama contra `master`, no contra `develop`, y
+automatizar la matriz en una tarea separada.
