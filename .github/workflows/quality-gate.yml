@@ -1,0 +1,134 @@
+name: quality-gate
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-gate-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  repository-and-php:
+    name: repository-and-php
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          coverage: none
+          tools: none
+
+      - name: Check whitespace in changed content
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        shell: bash
+        run: |
+          if [[ "$EVENT_NAME" == "pull_request" ]]; then
+            git diff --check "$BASE_SHA...$HEAD_SHA"
+          elif git rev-parse --verify HEAD^ >/dev/null 2>&1; then
+            git diff --check HEAD^ HEAD
+          else
+            git show --check --format= HEAD
+          fi
+
+      - name: Check Pull Request target policy
+        env:
+          BASE_BRANCH: ${{ github.base_ref }}
+          HEAD_BRANCH: ${{ github.head_ref }}
+          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+          CURRENT_REPOSITORY: ${{ github.repository }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: php .github/scripts/check_pr_target.php
+
+      - name: Check repository hygiene
+        run: php .github/scripts/check_repository_hygiene.php
+
+      # TEST-AVISOS-ME-001 requires MariaDB, API, fixtures and test credentials.
+      # It stays outside this informational quality-gate.
+      - name: Lint backend and quality-gate PHP syntax
+        shell: bash
+        run: |
+          mapfile -d '' php_files < <(
+            git ls-files -z -- \
+              ':(glob)backend/**/*.php' \
+              ':(glob).github/scripts/*.php'
+          )
+
+          if [[ ${#php_files[@]} -eq 0 ]]; then
+            echo "No PHP files found in the authorized lint scope."
+            exit 1
+          fi
+
+          for php_file in "${php_files[@]}"; do
+            php -l "$php_file"
+          done
+
+  frontend-build:
+    name: frontend-build
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Use repository npm version
+        run: npm install --global npm@11.6.1
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      # There is no lint script or stabilized unit suite yet.
+      - name: Build frontend
+        run: npm run build
+
+  quality-gate:
+    name: quality-gate
+    if: ${{ always() }}
+    needs:
+      - repository-and-php
+      - frontend-build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Evaluate quality-gate
+        env:
+          REPOSITORY_AND_PHP_RESULT: ${{ needs['repository-and-php'].result }}
+          FRONTEND_BUILD_RESULT: ${{ needs['frontend-build'].result }}
+        shell: bash
+        run: |
+          if [[ "$REPOSITORY_AND_PHP_RESULT" != "success" ]] ||
+             [[ "$FRONTEND_BUILD_RESULT" != "success" ]]; then
+            echo "quality-gate failed."
+            echo "repository-and-php: $REPOSITORY_AND_PHP_RESULT"
+            echo "frontend-build: $FRONTEND_BUILD_RESULT"
+            exit 1
+          fi
+
+          echo "quality-gate passed."
