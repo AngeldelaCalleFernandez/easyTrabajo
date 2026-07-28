@@ -805,3 +805,56 @@ Estado: pendiente de ejecución manual
 Siguiente paso: Realizar backup local, aplicar el seed manualmente, ejecutar
 primero las pruebas negativas y después las positivas, registrar resultados y
 usar el rollback exacto al finalizar.
+
+---
+
+## CAMBIO-0032 - Ejecución de matriz de avisos multiempresa
+
+Fecha: 2026-07-28
+Agente: Codex / agente testing-base de datos-documentación EasyParte
+Rama: testing/avisos-reasignacion-multiempresa-fixtures
+Tipo de cambio: testing/documentación/ejecución local
+Resumen: Se ejecuta en la base local `easyParte` la matriz manual de avisos y
+reasignación auditada entre dos empresas. La ejecución incluye backup completo,
+preflight, fixture, pruebas negativas, pruebas positivas y consultas SQL de
+integridad multiempresa.
+
+Archivo actualizado:
+
+- `docs/testing/avisos_reasignacion_multiempresa.md`
+- `docs/seguimiento/registro_cambios_agentes.md`
+
+Resultados:
+
+- Backup completo externo al directorio público creado y verificado mediante
+  tamaño, final correcto del volcado y SHA-256.
+- `auditoria_evento` y los roles base requeridos confirmados.
+- Preflight con `0` colisiones y `0` dependencias faltantes.
+- Fixture importado con los siete recuentos esperados.
+- Baseline de auditoría: `7`.
+- Siete pruebas negativas correctas, con estado persistente intacto y cero
+  eventos por rechazo.
+- Nueve pruebas positivas correctas.
+- Cuatro operaciones de escritura con HTTP 200 y eventos `8` a `11`.
+- Tres consultas de cruce entre evento, aviso, usuario y empleado con `0`
+  resultados.
+- Consulta de eventos inesperados de las negativas con `0` resultados.
+- No se documentaron tokens ni contraseñas.
+
+Estado de datos local: El fixture y los cuatro eventos positivos permanecen en
+la base para revisión. No se ejecutó el rollback.
+
+Estados conservados:
+
+- INC-0013 permanece `abierta`.
+- PEN-0006 permanece `parcial`.
+- PEN-0009 permanece `parcial`.
+
+Riesgos: La matriz demuestra el aislamiento del alcance concreto de avisos y
+reasignación auditada, pero no sustituye una validación general de tenant ni de
+auditoría. La restauración del backup no se probó y la matriz aún no está
+automatizada.
+
+Estado: validado en local
+Siguiente paso: Revisar el diff documental, decidir si se conserva o revierte el
+fixture local y automatizar la matriz en una tarea separada.

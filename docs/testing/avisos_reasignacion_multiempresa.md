@@ -3,7 +3,7 @@
 Fecha de preparación: 2026-07-28
 Entorno previsto: local/XAMPP
 Fase: AVISOS-REASIGNACION-MULTIEMPRESA
-Estado: fixtures y matriz preparados; ejecución pendiente
+Estado: ejecución local completada y validada
 
 ## Objetivo
 
@@ -17,9 +17,9 @@ Validar con dos empresas reales de prueba que:
 - no aparecen eventos cruzados entre empresas;
 - las peticiones rechazadas no modifican el aviso ni crean eventos.
 
-Este documento prepara la ejecución. No acredita resultados hasta que una
-persona complete la columna `Resultado obtenido` y adjunte evidencia local no
-sensible.
+Este documento recoge la preparación y la ejecución local realizada. Los
+resultados obtenidos y la evidencia SQL no sensible quedan registrados en las
+secciones siguientes.
 
 ## Alcance y contratos
 
@@ -121,6 +121,35 @@ Restauración de prueba realizada: sí/no
 Responsable:
 ```
 
+## Registro de ejecución local
+
+```txt
+Fecha/hora: 2026-07-28 09:26–09:31 CEST
+Entorno: local/XAMPP
+Base local: easyParte
+Servidor: MariaDB 10.4.32
+Rama: testing/avisos-reasignacion-multiempresa-fixtures
+Backup: copia completa externa al directorio público, 20.782 bytes
+SHA-256: C5A1D97301CE38ED7FD92D173E1396D4CA8D0B48C20C709883FC33F44290D6BD
+Restauración de prueba realizada: no
+Preflight: 0 colisiones, 0 dependencias faltantes, resultado OK
+Baseline de auditoría: 7
+Tokens o contraseñas documentados: no
+Rollback ejecutado: no; fixture conservado para revisión local
+```
+
+Recuentos obtenidos después de importar el fixture:
+
+| Recurso | Filas |
+|---|---:|
+| Empresa | 2 |
+| Departamento | 2 |
+| Empleado | 4 |
+| Cliente | 2 |
+| Usuario | 4 |
+| Usuario-rol | 4 |
+| Aviso | 7 |
+
 ## Baseline de auditoría y estado
 
 Antes de cualquier petición, guardar el valor devuelto:
@@ -157,13 +186,13 @@ debe conservarse sin cambios y no debe aparecer un evento nuevo.
 
 | ID | Sesión | Petición o comprobación | Resultado esperado | Resultado obtenido | Estado |
 |---|---|---|---|---|---|
-| AVISO-ME-N01 | Administrador A | `PUT /api/avisos/9271/asignar` con `{"id_empleado":9212}` | Rechazo genérico; 9271 sigue en 9221; cero eventos nuevos | Pendiente | Pendiente |
-| AVISO-ME-N02 | Administrador A | `PUT /api/avisos/9262/asignar` con `{"id_empleado":9221}` | 403 genérico; 9262 sigue libre; cero eventos nuevos | Pendiente | Pendiente |
-| AVISO-ME-N03 | Técnico A | `PUT /api/avisos/9271/asignar` con `{"id_empleado":9212}` | Rechazo genérico; 9271 sigue en 9221; cero eventos nuevos | Pendiente | Pendiente |
-| AVISO-ME-N04 | Técnico A | `PUT /api/avisos/9264/asignar` con `{"id_empleado":9212}` | 403; 9264 sigue cancelado y asignado a 9211; cero eventos nuevos | Pendiente | Pendiente |
-| AVISO-ME-N05 | Técnico A | `PUT /api/avisos/9261/asignar` con `{"id_empleado":9211}` | 403; 9261 sigue en 9211; cero eventos nuevos | Pendiente | Pendiente |
-| AVISO-ME-N06 | Administrador A | `GET /api/avisos` y `GET /api/avisos/empleados-asignables` | No aparecen avisos 9271/9272 ni empleados 9221/9222 | Pendiente | Pendiente |
-| AVISO-ME-N07 | Técnico A | Mismos listados | No aparecen avisos ni empleados de Empresa B; tampoco aparece 9211 entre asignables | Pendiente | Pendiente |
+| AVISO-ME-N01 | Administrador A | `PUT /api/avisos/9271/asignar` con `{"id_empleado":9212}` | Rechazo genérico; 9271 sigue en 9221; cero eventos nuevos | HTTP 404; estado intacto; 0 eventos | Correcta |
+| AVISO-ME-N02 | Administrador A | `PUT /api/avisos/9262/asignar` con `{"id_empleado":9221}` | 403 genérico; 9262 sigue libre; cero eventos nuevos | HTTP 403; estado intacto; 0 eventos | Correcta |
+| AVISO-ME-N03 | Técnico A | `PUT /api/avisos/9271/asignar` con `{"id_empleado":9212}` | Rechazo genérico; 9271 sigue en 9221; cero eventos nuevos | HTTP 404; estado intacto; 0 eventos | Correcta |
+| AVISO-ME-N04 | Técnico A | `PUT /api/avisos/9264/asignar` con `{"id_empleado":9212}` | 403; 9264 sigue cancelado y asignado a 9211; cero eventos nuevos | HTTP 403; estado intacto; 0 eventos | Correcta |
+| AVISO-ME-N05 | Técnico A | `PUT /api/avisos/9261/asignar` con `{"id_empleado":9211}` | 403; 9261 sigue en 9211; cero eventos nuevos | HTTP 403; estado intacto; 0 eventos | Correcta |
+| AVISO-ME-N06 | Administrador A | `GET /api/avisos` y `GET /api/avisos/empleados-asignables` | No aparecen avisos 9271/9272 ni empleados 9221/9222 | HTTP 200; avisos 9261–9265; empleados 9211/9212 | Correcta |
+| AVISO-ME-N07 | Técnico A | Mismos listados | No aparecen avisos ni empleados de Empresa B; tampoco aparece 9211 entre asignables | HTTP 200; avisos 9261/9262/9264/9265; asignable 9212 | Correcta |
 
 ### Comprobación posterior a cada rechazo
 
@@ -190,15 +219,15 @@ la respuesta HTTP.
 
 | ID | Sesión | Petición o comprobación | Resultado esperado | Resultado obtenido | Estado |
 |---|---|---|---|---|---|
-| AVISO-ME-P01 | Administrador A | `GET /api/avisos` | Solo avisos 9261–9265; ningún aviso B | Pendiente | Pendiente |
-| AVISO-ME-P02 | Técnico A | `GET /api/avisos` | Avisos propios o libres de A: 9261, 9262, 9264 y 9265; no 9263 ni avisos B | Pendiente | Pendiente |
-| AVISO-ME-P03 | Administrador A | `GET /api/avisos/empleados-asignables` | Empleados 9211 y 9212; ningún empleado B | Pendiente | Pendiente |
-| AVISO-ME-P04 | Técnico A | `GET /api/avisos/empleados-asignables` | Solo 9212; no 9211, 9221 ni 9222 | Pendiente | Pendiente |
-| AVISO-ME-P05 | Técnico A | `PUT /api/avisos/9261/asignar` con `{"id_empleado":9212}` | 200; 9261 pasa de 9211 a 9212; evento `aviso_reasignado`, empresa 9201, usuario 9242 | Pendiente | Pendiente |
-| AVISO-ME-P06 | Administrador A | `PUT /api/avisos/9262/asignar` con `{"id_empleado":9212}` | 200; 9262 pasa de libre a 9212; evento `aviso_asignado`, empresa 9201, usuario 9241 | Pendiente | Pendiente |
-| AVISO-ME-P07 | Técnico A | `PUT /api/avisos/9265/coger` sin `id_empleado` | 200; 9265 pasa de libre a 9211; evento `aviso_autoasignado`, empresa 9201, usuario 9242 | Pendiente | Pendiente |
-| AVISO-ME-P08 | Administrador B | `PUT /api/avisos/9271/asignar` con `{"id_empleado":9222}` | 200; 9271 pasa de 9221 a 9222; evento `aviso_reasignado`, empresa 9202, usuario 9251 | Pendiente | Pendiente |
-| AVISO-ME-P09 | SQL de comprobación | Revisar eventos A/B posteriores al baseline | Cada evento conserva empresa, usuario, aviso y empleado de su tenant | Pendiente | Pendiente |
+| AVISO-ME-P01 | Administrador A | `GET /api/avisos` | Solo avisos 9261–9265; ningún aviso B | HTTP 200; avisos 9261–9265 | Correcta |
+| AVISO-ME-P02 | Técnico A | `GET /api/avisos` | Avisos propios o libres de A: 9261, 9262, 9264 y 9265; no 9263 ni avisos B | HTTP 200; avisos 9261/9262/9264/9265 | Correcta |
+| AVISO-ME-P03 | Administrador A | `GET /api/avisos/empleados-asignables` | Empleados 9211 y 9212; ningún empleado B | HTTP 200; empleados 9211/9212 | Correcta |
+| AVISO-ME-P04 | Técnico A | `GET /api/avisos/empleados-asignables` | Solo 9212; no 9211, 9221 ni 9222 | HTTP 200; empleado 9212 | Correcta |
+| AVISO-ME-P05 | Técnico A | `PUT /api/avisos/9261/asignar` con `{"id_empleado":9212}` | 200; 9261 pasa de 9211 a 9212; evento `aviso_reasignado`, empresa 9201, usuario 9242 | HTTP 200; estado y evento 8 correctos | Correcta |
+| AVISO-ME-P06 | Administrador A | `PUT /api/avisos/9262/asignar` con `{"id_empleado":9212}` | 200; 9262 pasa de libre a 9212; evento `aviso_asignado`, empresa 9201, usuario 9241 | HTTP 200; estado y evento 9 correctos | Correcta |
+| AVISO-ME-P07 | Técnico A | `PUT /api/avisos/9265/coger` sin `id_empleado` | 200; 9265 pasa de libre a 9211; evento `aviso_autoasignado`, empresa 9201, usuario 9242 | HTTP 200; estado y evento 10 correctos | Correcta |
+| AVISO-ME-P08 | Administrador B | `PUT /api/avisos/9271/asignar` con `{"id_empleado":9222}` | 200; 9271 pasa de 9221 a 9222; evento `aviso_reasignado`, empresa 9202, usuario 9251 | HTTP 200; estado y evento 11 correctos | Correcta |
+| AVISO-ME-P09 | SQL de comprobación | Revisar eventos A/B posteriores al baseline | Cada evento conserva empresa, usuario, aviso y empleado de su tenant | 4 eventos correctos; 3 controles de cruce a 0 | Correcta |
 
 Nota: 9264 es propio del Técnico A pero está cancelado. Puede aparecer en el
 listado general actual; la regla que se valida es que no pueda reasignarse.
@@ -373,6 +402,11 @@ La matriz se considera correcta solo si se cumplen todos:
 Un resultado parcial o una evidencia basada solo en la interfaz no permite
 marcar la prueba como superada.
 
+Resultado de la ejecución local: **matriz superada**. Las siete pruebas
+negativas y las nueve positivas cumplen el resultado esperado. Los eventos
+creados son los identificadores 8–11; los tres controles de cruce y el control
+de eventos inesperados devuelven cero.
+
 ## Rollback
 
 El seed contiene al final un bloque comentado de rollback. Debe ejecutarse
@@ -434,9 +468,8 @@ Resultado esperado: `0`.
 - Repetir esta matriz en el futuro mediante automatización.
 - Implementar un endpoint protegido y filtrado por empresa para consultar
   auditoría; las consultas SQL de este documento son solo verificación local.
-- Ejecutar y registrar esta matriz antes de dar por validado el aislamiento
-  multiempresa de auditoría.
+- Automatizar la matriz ejecutada manualmente para prevenir regresiones.
 
-INC-0013 permanece abierta. PEN-0006 y PEN-0009 permanecen parciales: este
-documento y el fixture preparan pruebas, pero no demuestran su ejecución ni
-completan tenant o auditoría general.
+INC-0013 permanece abierta. PEN-0006 y PEN-0009 permanecen parciales: esta
+ejecución valida el alcance de avisos y reasignación de la matriz, pero no
+completa tenant ni auditoría general.
