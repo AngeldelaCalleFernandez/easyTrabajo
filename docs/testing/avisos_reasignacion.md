@@ -97,9 +97,33 @@ reasignación y toma para todos los roles implicados:
 - el rollback dejó cero filas y eventos del fixture y conservó los dos roles
   base.
 
+## TEST-AVISOS-FIN-002 — regresión automatizada
+
+Fecha de ejecución: 2026-07-29
+Entorno: local/XAMPP
+Resultado: implementado y validado
+
+El arnés `tests/integration/avisos_reasignacion_multiempresa/` incorpora la
+matriz terminal completa como regresión automática:
+
+- cinco autenticaciones correctas, incluida Atención al Cliente de Empresa A;
+- FIN-01 a FIN-08 correctas con HTTP 403;
+- comparación exacta antes/después de `id_tarea`, `id_empresa`, `estado`,
+  `id_empleado` y `fecha_fin`;
+- cero eventos posteriores al baseline individual de cada rechazo;
+- respuestas sin SQLSTATE, trazas, rutas internas ni detalles SQL;
+- las siete negativas y nueve positivas anteriores continúan correctas;
+- las cuatro operaciones positivas continúan creando exactamente cuatro
+  eventos y los controles multiempresa permanecen a cero;
+- la matriz pasa de 20 a 29 resultados;
+- rollback completo, comprobación independiente de cero residuos y
+  `--rollback-only` correcto, con los tres roles base intactos.
+
+El arnés continúa limitado a local/test y no forma parte del `quality-gate` de
+GitHub.
+
 ## Pendientes
 
 - Repetir periódicamente la matriz multiempresa ya validada como regresión.
-- Automatizar las pruebas positivas y negativas de permisos.
 - Verificar y documentar la cobertura de auditoría de las demás acciones
   críticas antes de cerrar INC-0013 o marcar PEN-0009 como implementado.

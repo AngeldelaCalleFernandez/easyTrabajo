@@ -53,6 +53,14 @@ final class TestRunner
                 'id_empleado' => 9211,
                 'rol' => 'tecnico',
             ],
+            'atencion_a' => [
+                'test' => 'AUTH-05',
+                'email' => 'atencion-a.avisos-multiempresa@test.local',
+                'id_usuario' => 9243,
+                'id_empresa' => 9201,
+                'id_empleado' => null,
+                'rol' => 'atencion al cliente',
+            ],
             'admin_b' => [
                 'test' => 'AUTH-03',
                 'email' => 'admin-b.avisos-multiempresa@test.local',
@@ -96,6 +104,71 @@ final class TestRunner
 
     private function runNegativeTests(): void
     {
+        $this->negativeWrite(
+            'FIN-01',
+            'admin_a',
+            9266,
+            403,
+            '/avisos/9266/asignar',
+            ['id_empleado' => 9212]
+        );
+        $this->negativeWrite(
+            'FIN-02',
+            'atencion_a',
+            9266,
+            403,
+            '/avisos/9266/asignar',
+            ['id_empleado' => 9212]
+        );
+        $this->negativeWrite(
+            'FIN-03',
+            'tecnico_a',
+            9266,
+            403,
+            '/avisos/9266/asignar',
+            ['id_empleado' => 9212]
+        );
+        $this->negativeWrite(
+            'FIN-04',
+            'tecnico_a',
+            9267,
+            403,
+            '/avisos/9267/coger',
+            null
+        );
+        $this->negativeWrite(
+            'FIN-05',
+            'admin_a',
+            9264,
+            403,
+            '/avisos/9264/asignar',
+            ['id_empleado' => 9212]
+        );
+        $this->negativeWrite(
+            'FIN-06',
+            'atencion_a',
+            9264,
+            403,
+            '/avisos/9264/asignar',
+            ['id_empleado' => 9212]
+        );
+        $this->negativeWrite(
+            'FIN-07',
+            'tecnico_a',
+            9264,
+            403,
+            '/avisos/9264/asignar',
+            ['id_empleado' => 9212]
+        );
+        $this->negativeWrite(
+            'FIN-08',
+            'tecnico_a',
+            9268,
+            403,
+            '/avisos/9268/coger',
+            null
+        );
+
         $this->negativeWrite(
             'AVISO-ME-N01',
             'admin_a',
@@ -143,7 +216,11 @@ final class TestRunner
             $notices = $this->getList('/avisos', 'admin_a');
             $employees = $this->getList('/avisos/empleados-asignables', 'admin_a');
 
-            $this->assertIds($notices, 'id_tarea', [9261, 9262, 9263, 9264, 9265]);
+            $this->assertIds(
+                $notices,
+                'id_tarea',
+                [9261, 9262, 9263, 9264, 9265, 9266, 9267, 9268]
+            );
             $this->assertIds($employees, 'id_empleado', [9211, 9212]);
             $this->assertTrue(
                 $before === $this->database->allTaskStates(),
@@ -161,7 +238,11 @@ final class TestRunner
             $notices = $this->getList('/avisos', 'tecnico_a');
             $employees = $this->getList('/avisos/empleados-asignables', 'tecnico_a');
 
-            $this->assertIds($notices, 'id_tarea', [9261, 9262, 9264, 9265]);
+            $this->assertIds(
+                $notices,
+                'id_tarea',
+                [9261, 9262, 9264, 9265, 9266, 9267, 9268]
+            );
             $this->assertIds($employees, 'id_empleado', [9212]);
             $this->assertTrue(
                 $before === $this->database->allTaskStates(),
@@ -180,7 +261,7 @@ final class TestRunner
             $this->assertIds(
                 $this->getList('/avisos', 'admin_a'),
                 'id_tarea',
-                [9261, 9262, 9263, 9264, 9265]
+                [9261, 9262, 9263, 9264, 9265, 9266, 9267, 9268]
             );
         });
 
@@ -188,7 +269,7 @@ final class TestRunner
             $this->assertIds(
                 $this->getList('/avisos', 'tecnico_a'),
                 'id_tarea',
-                [9261, 9262, 9264, 9265]
+                [9261, 9262, 9264, 9265, 9266, 9267, 9268]
             );
         });
 
@@ -295,7 +376,7 @@ final class TestRunner
         int $taskId,
         int $expectedStatus,
         string $path,
-        array $body
+        ?array $body
     ): void {
         $this->execute($testId, function () use (
             $sessionName,
@@ -466,7 +547,7 @@ final class TestRunner
             trim($role),
             ['Á' => 'A', 'É' => 'E', 'Í' => 'I', 'Ó' => 'O', 'Ú' => 'U',
              'á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u',
-             'Ã©' => 'e']
+             'Ã©' => 'e', 'Ã³' => 'o', 'Ã‰' => 'E', 'Ã“' => 'O']
         );
 
         return strtolower($normalized);

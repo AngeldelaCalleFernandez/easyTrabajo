@@ -10,8 +10,10 @@ final class DatabaseVerifier
     private const DEPARTAMENTO_IDS = [9203, 9204];
     private const EMPLEADO_IDS = [9211, 9212, 9221, 9222];
     private const CLIENTE_IDS = [9231, 9232];
-    private const USUARIO_IDS = [9241, 9242, 9251, 9252];
-    private const TAREA_IDS = [9261, 9262, 9263, 9264, 9265, 9271, 9272];
+    private const USUARIO_IDS = [9241, 9242, 9243, 9251, 9252];
+    private const TAREA_IDS = [
+        9261, 9262, 9263, 9264, 9265, 9266, 9267, 9268, 9271, 9272,
+    ];
 
     private PDO $connection;
 
@@ -112,21 +114,26 @@ final class DatabaseVerifier
                     'cliente-b.avisos-multiempresa@test.local'
                 )",
             "SELECT COUNT(*) FROM usuario
-             WHERE id_usuario IN (9241, 9242, 9251, 9252)
+             WHERE id_usuario IN (9241, 9242, 9243, 9251, 9252)
                 OR email IN (
                     'admin-a.avisos-multiempresa@test.local',
                     'tecnico-a.avisos-multiempresa@test.local',
+                    'atencion-a.avisos-multiempresa@test.local',
                     'admin-b.avisos-multiempresa@test.local',
                     'tecnico-b.avisos-multiempresa@test.local'
                 )",
-            'SELECT COUNT(*) FROM usuario_rol WHERE id_usuario IN (9241, 9242, 9251, 9252)',
-            'SELECT COUNT(*) FROM tarea WHERE id_tarea IN (9261, 9262, 9263, 9264, 9265, 9271, 9272)',
+            'SELECT COUNT(*) FROM usuario_rol WHERE id_usuario IN (9241, 9242, 9243, 9251, 9252)',
+            'SELECT COUNT(*) FROM tarea
+             WHERE id_tarea IN (9261, 9262, 9263, 9264, 9265, 9266, 9267, 9268, 9271, 9272)',
             "SELECT COUNT(*) FROM auditoria_evento
              WHERE id_empresa IN (9201, 9202)
-                OR id_usuario IN (9241, 9242, 9251, 9252)
+                OR id_usuario IN (9241, 9242, 9243, 9251, 9252)
                 OR (
                     entidad = 'aviso'
-                    AND entidad_id IN (9261, 9262, 9263, 9264, 9265, 9271, 9272)
+                    AND entidad_id IN (
+                        9261, 9262, 9263, 9264, 9265,
+                        9266, 9267, 9268, 9271, 9272
+                    )
                 )",
         ];
 
@@ -166,9 +173,9 @@ final class DatabaseVerifier
             'departamento' => 2,
             'empleado' => 4,
             'cliente' => 2,
-            'usuario' => 4,
-            'usuario_rol' => 4,
-            'tarea' => 7,
+            'usuario' => 5,
+            'usuario_rol' => 5,
+            'tarea' => 10,
         ];
         $actual = $this->fixtureCounts();
 
@@ -197,10 +204,13 @@ final class DatabaseVerifier
              WHERE id_auditoria_evento > :baseline
                AND (
                    id_empresa IN (9201, 9202)
-                   OR id_usuario IN (9241, 9242, 9251, 9252)
+                   OR id_usuario IN (9241, 9242, 9243, 9251, 9252)
                    OR (
                        entidad = 'aviso'
-                       AND entidad_id IN (9261, 9262, 9263, 9264, 9265, 9271, 9272)
+                       AND entidad_id IN (
+                           9261, 9262, 9263, 9264, 9265,
+                           9266, 9267, 9268, 9271, 9272
+                       )
                    )
                )"
         );
@@ -231,7 +241,10 @@ final class DatabaseVerifier
         $statement = $this->connection->query(
             'SELECT id_tarea, id_empresa, estado, id_empleado, fecha_fin
              FROM tarea
-             WHERE id_tarea IN (9261, 9262, 9263, 9264, 9265, 9271, 9272)
+             WHERE id_tarea IN (
+                 9261, 9262, 9263, 9264, 9265,
+                 9266, 9267, 9268, 9271, 9272
+             )
              ORDER BY id_tarea'
         );
 
@@ -318,24 +331,32 @@ final class DatabaseVerifier
             $this->connection->exec(
                 "DELETE FROM auditoria_evento
                  WHERE id_empresa IN (9201, 9202)
-                    OR id_usuario IN (9241, 9242, 9251, 9252)
+                    OR id_usuario IN (9241, 9242, 9243, 9251, 9252)
                     OR (
                         entidad = 'aviso'
-                        AND entidad_id IN (9261, 9262, 9263, 9264, 9265, 9271, 9272)
+                        AND entidad_id IN (
+                            9261, 9262, 9263, 9264, 9265,
+                            9266, 9267, 9268, 9271, 9272
+                        )
                     )"
             );
             $this->connection->exec(
                 'DELETE FROM tarea
-                 WHERE id_tarea IN (9261, 9262, 9263, 9264, 9265, 9271, 9272)'
+                 WHERE id_tarea IN (
+                     9261, 9262, 9263, 9264, 9265,
+                     9266, 9267, 9268, 9271, 9272
+                 )'
             );
             $this->connection->exec(
                 'DELETE FROM cliente WHERE id_cliente IN (9231, 9232)'
             );
             $this->connection->exec(
-                'DELETE FROM usuario_rol WHERE id_usuario IN (9241, 9242, 9251, 9252)'
+                'DELETE FROM usuario_rol
+                 WHERE id_usuario IN (9241, 9242, 9243, 9251, 9252)'
             );
             $this->connection->exec(
-                'DELETE FROM usuario WHERE id_usuario IN (9241, 9242, 9251, 9252)'
+                'DELETE FROM usuario
+                 WHERE id_usuario IN (9241, 9242, 9243, 9251, 9252)'
             );
             $this->connection->exec(
                 'DELETE FROM empleado WHERE id_empleado IN (9211, 9212, 9221, 9222)'
@@ -372,10 +393,13 @@ final class DatabaseVerifier
                 "SELECT COUNT(*)
                  FROM auditoria_evento
                  WHERE id_empresa IN (9201, 9202)
-                    OR id_usuario IN (9241, 9242, 9251, 9252)
+                    OR id_usuario IN (9241, 9242, 9243, 9251, 9252)
                     OR (
                         entidad = 'aviso'
-                        AND entidad_id IN (9261, 9262, 9263, 9264, 9265, 9271, 9272)
+                        AND entidad_id IN (
+                            9261, 9262, 9263, 9264, 9265,
+                            9266, 9267, 9268, 9271, 9272
+                        )
                     )"
             )
             ->fetchColumn();
@@ -394,14 +418,14 @@ final class DatabaseVerifier
         $statement = $this->connection->query(
             'SELECT id_rol, nombre
              FROM rol
-             WHERE id_rol IN (1, 2)
+             WHERE id_rol IN (1, 2, 3)
              ORDER BY id_rol'
         );
         $roles = $statement->fetchAll();
 
-        if (count($roles) !== 2) {
+        if (count($roles) !== 3) {
             throw new RuntimeException(
-                'No estan disponibles los dos roles base requeridos.'
+                'No estan disponibles los tres roles base requeridos.'
             );
         }
 
@@ -410,9 +434,13 @@ final class DatabaseVerifier
             $normalized[(int)$role['id_rol']] = $this->normalizeRole((string)$role['nombre']);
         }
 
-        if (($normalized[1] ?? '') !== 'administrador' || ($normalized[2] ?? '') !== 'tecnico') {
+        if (
+            ($normalized[1] ?? '') !== 'administrador'
+            || ($normalized[2] ?? '') !== 'tecnico'
+            || ($normalized[3] ?? '') !== 'atencion al cliente'
+        ) {
             throw new RuntimeException(
-                'Los roles base no coinciden con Administrador y Tecnico.'
+                'Los roles base no coinciden con Administrador, Tecnico y Atencion al Cliente.'
             );
         }
     }
@@ -459,7 +487,7 @@ final class DatabaseVerifier
             trim($role),
             ['Á' => 'A', 'É' => 'E', 'Í' => 'I', 'Ó' => 'O', 'Ú' => 'U',
              'á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u',
-             'Ã©' => 'e']
+             'Ã©' => 'e', 'Ã³' => 'o', 'Ã‰' => 'E', 'Ã“' => 'O']
         );
 
         return strtolower($normalized);

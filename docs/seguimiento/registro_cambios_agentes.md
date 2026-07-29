@@ -1194,3 +1194,78 @@ versionados ni TEST-AVISOS-ME-001. No se ejecutó `npm audit fix`.
 Estado: implementado y validado en local
 Siguiente paso: Mantener este caso como regresión controlada y abordar cualquier
 ampliación del arnés en una tarea posterior independiente.
+
+---
+
+## CAMBIO-0038 - Automatización de regresión de avisos terminales
+
+Fecha: 2026-07-29
+Agente: Codex / agente testing-documentación EasyParte
+Rama: testing/automatizar-avisos-terminales
+Tipo de cambio: testing/documentación/fixture local
+Resumen: TEST-AVISOS-FIN-002 amplía el arnés PHP CLI de avisos multiempresa
+para automatizar los ocho rechazos de asignación, reasignación y toma sobre
+avisos `Finalizada` o `Cancelada`.
+
+Archivos funcionales de testing modificados:
+
+- `bbdd/seed_avisos_reasignacion_multiempresa_pruebas.sql`
+- `tests/integration/avisos_reasignacion_multiempresa/README.md`
+- `tests/integration/avisos_reasignacion_multiempresa/src/ApiClient.php`
+- `tests/integration/avisos_reasignacion_multiempresa/src/DatabaseVerifier.php`
+- `tests/integration/avisos_reasignacion_multiempresa/src/FixtureManager.php`
+- `tests/integration/avisos_reasignacion_multiempresa/src/TestRunner.php`
+
+Documentación actualizada:
+
+- `docs/testing/avisos_reasignacion.md`
+- `docs/testing/avisos_reasignacion_multiempresa.md`
+- `docs/seguimiento/pendientes.md`
+- `docs/seguimiento/registro_cambios_agentes.md`
+
+Ampliación del fixture:
+
+- usuario `9243`, Atención al Cliente de Empresa A, rol base `3` y sin empleado;
+- aviso `9266`, `Finalizada` y asignado a `9211`;
+- aviso `9267`, `Finalizada` y libre;
+- aviso `9268`, `Cancelada` y libre;
+- se conserva `9264` como `Cancelada` asignada;
+- recuentos: 2 empresas, 2 departamentos, 4 empleados, 2 clientes, 5
+  usuarios, 5 relaciones de rol y 10 avisos.
+
+Resultados:
+
+- `--preflight` correcto, exit code `0`, sin modificación de datos;
+- backup local creado y verificado: `19.808` bytes, SHA-256
+  `4C56697E277698AD0830805CD8F0B45CE0FFB95BD29E25D8CEB191A48A607966`;
+- cinco autenticaciones correctas;
+- FIN-01 a FIN-08 correctas con HTTP 403, estado completo intacto, cero
+  eventos y respuestas sin detalles internos;
+- las siete negativas anteriores y las nueve positivas permanecen correctas;
+- veintinueve resultados correctos en total;
+- exactamente cuatro eventos de las cuatro operaciones positivas;
+- cero cruces multiempresa;
+- rollback de `--run`, comprobación independiente y `--rollback-only`
+  correctos;
+- cero filas fixture, cero eventos relacionados y los tres roles base intactos.
+
+Validaciones:
+
+- `php -l` correcto en los cuatro PHP modificados del arnés;
+- `php -l` correcto en todos los PHP versionados de backend;
+- higiene correcta sobre 164 archivos versionados;
+- `git diff --check` correcto;
+- no se documentaron tokens, contraseñas ni secretos.
+
+Alcance conservado:
+
+- el arnés continúa limitado a local/test y no se ejecuta en el
+  `quality-gate`;
+- no se modificó backend funcional, frontend, rutas, `AuditLogger`,
+  migraciones ni esquema;
+- INC-0013 permanece `abierta`;
+- PEN-0006 y PEN-0009 permanecen `parciales`.
+
+Estado: implementado y validado en local
+Siguiente paso: Mantener la matriz de 29 resultados como regresión controlada
+y ampliar tenant y auditoría a los módulos restantes en tareas separadas.

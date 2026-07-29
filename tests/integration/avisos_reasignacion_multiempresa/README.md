@@ -7,13 +7,15 @@ Este arnés PHP CLI automatiza la matriz
 
 - aislamiento de listados de avisos y empleados asignables;
 - permisos de asignación, reasignación y toma de avisos;
+- bloqueo de asignación, reasignación y toma en estados `Finalizada` y
+  `Cancelada`;
 - ausencia de cambios y eventos ante peticiones rechazadas;
 - empresa, usuario, aviso y empleado de cada evento de auditoría;
 - ausencia de cruces entre empresas;
 - rollback y limpieza final del fixture.
 
-El arnés no usa Composer, PHPUnit ni dependencias nuevas. Reutiliza sin
-modificar:
+El arnés no usa Composer, PHPUnit ni dependencias nuevas. Usa el fixture
+dedicado:
 
 ```text
 bbdd/seed_avisos_reasignacion_multiempresa_pruebas.sql
@@ -28,7 +30,7 @@ bbdd/seed_avisos_reasignacion_multiempresa_pruebas.sql
 - Apache y MariaDB/MySQL del entorno local o de pruebas iniciados.
 - Esquema base de EasyParte disponible.
 - Migración `auditoria_evento` aplicada.
-- Roles base `Administrador` y `Tecnico` disponibles.
+- Roles base `Administrador`, `Tecnico` y `Atencion al Cliente` disponibles.
 - PHP CLI con las extensiones `curl`, `PDO` y `pdo_mysql`.
 - `mysql` para aplicar el seed.
 - `mysqldump` en ejecuciones `local`, donde el backup es obligatorio.
@@ -145,11 +147,12 @@ Revisar primero que `--preflight` termina correctamente:
 3. crea y verifica un backup obligatorio en `local`;
 4. aplica el seed dedicado y comprueba los recuentos;
 5. captura un baseline dinámico de auditoría;
-6. crea las cuatro sesiones fixture;
+6. crea las cinco sesiones fixture;
 7. ejecuta primero las negativas y después las positivas;
 8. verifica estado, eventos y cero cruces;
 9. intenta siempre el rollback en `finally`;
-10. comprueba que no quedan filas o eventos y que los roles siguen intactos.
+10. comprueba que no quedan filas o eventos y que los tres roles base siguen
+    intactos.
 
 Las pruebas son fail-fast: una aserción fallida detiene la matriz para no
 contaminar operaciones posteriores, pero mantiene el intento de rollback.
@@ -191,7 +194,8 @@ foráneas ni elimina recursos fuera de los IDs reservados.
 - Una interrupción forzada del proceso puede impedir que se ejecute `finally`;
   por eso existe `--rollback-only`.
 - La restauración del backup sigue requiriendo una prueba separada.
-- La prueba por API de aviso finalizado permanece pendiente.
+- La matriz terminal automatiza ocho rechazos sobre avisos `Finalizada` o
+  `Cancelada`; su ejecución sigue limitada a local/test.
 - La verificación de auditoría se realiza mediante acceso DB local/test hasta
   disponer de un endpoint protegido.
 - Esta matriz no acredita tenant o auditoría general del sistema.
@@ -203,3 +207,29 @@ La automatización no cambia los siguientes estados:
 - INC-0013 permanece abierta.
 - PEN-0006 permanece parcial.
 - PEN-0009 permanece parcial.
+
+## Fixture y matriz automatizada
+
+El fixture crea dos empresas, dos departamentos, cuatro empleados, dos
+clientes, cinco usuarios, cinco relaciones de rol y diez avisos. Empresa A
+incluye:
+
+- Administrador `9241`;
+- Tecnico `9242`, vinculado al empleado `9211`;
+- Atencion al Cliente `9243`, sin empleado vinculado;
+- avisos `9261` a `9268`, incluidos un `Finalizada` asignado, un
+  `Finalizada` libre, un `Cancelada` asignado y un `Cancelada` libre.
+
+Empresa B conserva los usuarios `9251` y `9252` y los avisos `9271` y `9272`
+para los controles de aislamiento.
+
+La ejecución completa produce veintinueve resultados:
+
+- cinco autenticaciones;
+- quince pruebas negativas, incluidas `FIN-01` a `FIN-08`;
+- nueve pruebas positivas;
+- cuatro operaciones positivas y exactamente cuatro eventos de auditoría.
+
+Cada rechazo terminal exige HTTP 403, compara el estado completo del aviso
+antes y después, usa un baseline individual, exige cero eventos y revisa que
+la respuesta no exponga SQLSTATE, trazas, rutas internas ni detalles SQL.

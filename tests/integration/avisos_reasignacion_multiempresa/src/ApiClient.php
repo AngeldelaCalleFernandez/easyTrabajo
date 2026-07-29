@@ -74,6 +74,13 @@ final class ApiClient
             '/Uncaught\s+\w+/i',
             '/[A-Z]:\\\\[^"\r\n]+\.php/i',
             '#/(?:var|home|srv|opt)/[^"\r\n]+\.php#i',
+            '/\bSELECT\b.+\bFROM\b/is',
+            '/\bINSERT\s+INTO\b/i',
+            '/\bUPDATE\s+[`A-Za-z0-9_.]+\s+SET\b/i',
+            '/\bDELETE\s+FROM\b/i',
+            '/\b(?:SQL syntax|syntax error)\b/i',
+            '/\b(?:MySQL|MariaDB)\b.{0,120}\b(?:table|column|syntax|error)\b/is',
+            '/\b(?:Unknown column|Table\s+[\'"`].+[\'"`]\s+doesn\'t exist)\b/is',
         ];
 
         foreach ($forbidden as $pattern) {

@@ -6,7 +6,8 @@
 -- Requisitos:
 --   - esquema base de EasyParte disponible;
 --   - migracion de auditoria_evento aplicada;
---   - roles base 1 (Administrador) y 2 (Tecnico) disponibles.
+--   - roles base 1 (Administrador), 2 (Tecnico) y
+--     3 (Atencion al Cliente) disponibles.
 --
 -- Seguridad:
 --   - usa exclusivamente IDs de fixture reservados entre 9201 y 9272;
@@ -42,31 +43,40 @@ SET @fixture_colisiones := (
            'cliente-b.avisos-multiempresa@test.local'
          ))
   + (SELECT COUNT(*) FROM usuario
-      WHERE id_usuario IN (9241, 9242, 9251, 9252)
+      WHERE id_usuario IN (9241, 9242, 9243, 9251, 9252)
          OR email IN (
            'admin-a.avisos-multiempresa@test.local',
            'tecnico-a.avisos-multiempresa@test.local',
+           'atencion-a.avisos-multiempresa@test.local',
            'admin-b.avisos-multiempresa@test.local',
            'tecnico-b.avisos-multiempresa@test.local'
          ))
   + (SELECT COUNT(*) FROM usuario_rol
-      WHERE id_usuario IN (9241, 9242, 9251, 9252))
+      WHERE id_usuario IN (9241, 9242, 9243, 9251, 9252))
   + (SELECT COUNT(*) FROM tarea
-      WHERE id_tarea IN (9261, 9262, 9263, 9264, 9265, 9271, 9272))
+      WHERE id_tarea IN (9261, 9262, 9263, 9264, 9265, 9266, 9267, 9268, 9271, 9272))
   + (SELECT COUNT(*) FROM auditoria_evento
       WHERE id_empresa IN (9201, 9202)
-         OR id_usuario IN (9241, 9242, 9251, 9252)
+         OR id_usuario IN (9241, 9242, 9243, 9251, 9252)
          OR (
            entidad = 'aviso'
-           AND entidad_id IN (9261, 9262, 9263, 9264, 9265, 9271, 9272)
+           AND entidad_id IN (9261, 9262, 9263, 9264, 9265, 9266, 9267, 9268, 9271, 9272)
          ))
 );
 
 SET @fixture_dependencias_faltantes := (
-  SELECT 2 - COUNT(*)
+  SELECT 3 - COUNT(*)
   FROM rol
   WHERE (id_rol = 1 AND nombre IN ('Administrador'))
      OR (id_rol = 2 AND nombre IN ('Tecnico', 'Técnico'))
+     OR (
+       id_rol = 3
+       AND nombre IN (
+         'Atencion al Cliente',
+         'Atención al Cliente',
+         'AtenciÃ³n al Cliente'
+       )
+     )
 );
 
 SET @fixture_preflight_ok := (
@@ -259,6 +269,16 @@ FROM (
     NOW()
   UNION ALL
   SELECT
+    9243,
+    'Atencion al Cliente Fixture A',
+    'atencion-a.avisos-multiempresa@test.local',
+    '$2y$10$lS3nUlgTuDzKEcHsTkHt8uBU1wX8CicGr0GwXoFOqM5b6POtxHXye',
+    1,
+    9201,
+    NULL,
+    NOW()
+  UNION ALL
+  SELECT
     9251,
     'Administrador Fixture B',
     'admin-b.avisos-multiempresa@test.local',
@@ -289,6 +309,8 @@ FROM (
   SELECT 9241 AS id_usuario, 1 AS id_rol
   UNION ALL
   SELECT 9242, 2
+  UNION ALL
+  SELECT 9243, 3
   UNION ALL
   SELECT 9251, 1
   UNION ALL
@@ -389,6 +411,51 @@ FROM (
     9241
   UNION ALL
   SELECT
+    9266,
+    'Fixture A: aviso finalizado asignado del Tecnico A',
+    NOW(),
+    NOW(),
+    'Normal',
+    'Finalizada',
+    'Contacto Fixture A',
+    '600926601',
+    9211,
+    9231,
+    9203,
+    9201,
+    9241
+  UNION ALL
+  SELECT
+    9267,
+    'Fixture A: aviso finalizado libre',
+    NOW(),
+    NOW(),
+    'Normal',
+    'Finalizada',
+    'Contacto Fixture A',
+    '600926701',
+    NULL,
+    9231,
+    9203,
+    9201,
+    9241
+  UNION ALL
+  SELECT
+    9268,
+    'Fixture A: aviso cancelado libre',
+    NOW(),
+    NOW(),
+    'Normal',
+    'Cancelada',
+    'Contacto Fixture A',
+    '600926801',
+    NULL,
+    9231,
+    9203,
+    9201,
+    9241
+  UNION ALL
+  SELECT
     9271,
     'Fixture B: aviso propio para reasignar',
     NOW(),
@@ -447,15 +514,15 @@ WHERE id_cliente IN (9231, 9232)
 UNION ALL
 SELECT 'usuario', COUNT(*)
 FROM usuario
-WHERE id_usuario IN (9241, 9242, 9251, 9252)
+WHERE id_usuario IN (9241, 9242, 9243, 9251, 9252)
 UNION ALL
 SELECT 'usuario_rol', COUNT(*)
 FROM usuario_rol
-WHERE id_usuario IN (9241, 9242, 9251, 9252)
+WHERE id_usuario IN (9241, 9242, 9243, 9251, 9252)
 UNION ALL
 SELECT 'tarea', COUNT(*)
 FROM tarea
-WHERE id_tarea IN (9261, 9262, 9263, 9264, 9265, 9271, 9272);
+WHERE id_tarea IN (9261, 9262, 9263, 9264, 9265, 9266, 9267, 9268, 9271, 9272);
 
 -- ---------------------------------------------------------------------------
 -- 3. Rollback manual exacto.
@@ -470,15 +537,15 @@ WHERE id_tarea IN (9261, 9262, 9263, 9264, 9265, 9271, 9272);
 -- -- 1) Eventos de auditoria relacionados.
 -- DELETE FROM auditoria_evento
 -- WHERE id_empresa IN (9201, 9202)
---    OR id_usuario IN (9241, 9242, 9251, 9252)
+--    OR id_usuario IN (9241, 9242, 9243, 9251, 9252)
 --    OR (
 --      entidad = 'aviso'
---      AND entidad_id IN (9261, 9262, 9263, 9264, 9265, 9271, 9272)
+--      AND entidad_id IN (9261, 9262, 9263, 9264, 9265, 9266, 9267, 9268, 9271, 9272)
 --    );
 --
 -- -- 2) Avisos.
 -- DELETE FROM tarea
--- WHERE id_tarea IN (9261, 9262, 9263, 9264, 9265, 9271, 9272);
+-- WHERE id_tarea IN (9261, 9262, 9263, 9264, 9265, 9266, 9267, 9268, 9271, 9272);
 --
 -- -- 3) Clientes.
 -- DELETE FROM cliente
@@ -486,10 +553,10 @@ WHERE id_tarea IN (9261, 9262, 9263, 9264, 9265, 9271, 9272);
 --
 -- -- 4) Usuarios, incluidas primero sus relaciones de rol.
 -- DELETE FROM usuario_rol
--- WHERE id_usuario IN (9241, 9242, 9251, 9252);
+-- WHERE id_usuario IN (9241, 9242, 9243, 9251, 9252);
 --
 -- DELETE FROM usuario
--- WHERE id_usuario IN (9241, 9242, 9251, 9252);
+-- WHERE id_usuario IN (9241, 9242, 9243, 9251, 9252);
 --
 -- -- 5) Empleados.
 -- DELETE FROM empleado
