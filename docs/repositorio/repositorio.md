@@ -76,6 +76,10 @@ Estructura orientativa:
 
 ```txt
 easyTrabajo/
+├── .github/
+│   ├── workflows/
+│   ├── scripts/
+│   └── pull_request_template.md
 ├── frontend/
 ├── backend/
 ├── bbdd/
@@ -256,6 +260,10 @@ Destino:
 - una tarea nueva no debe usar `master` como base mientras `develop` esté
   alineada y operativa.
 
+Desde REP-GIT-003-CI existe una plantilla común en
+`.github/pull_request_template.md`. Todavía no existe `CODEOWNERS`, porque no
+se ha confirmado un segundo revisor real.
+
 ---
 
 ## 12. Reglas de protección recomendadas
@@ -276,8 +284,8 @@ Además:
   `refactor/*`, `security/*`, `docs/*` y `testing/*`;
 - las aprobaciones obligatorias quedan pendientes hasta confirmar un segundo
   revisor real;
-- los status checks obligatorios quedan pendientes hasta crear y estabilizar
-  un `quality-gate`;
+- existe un `quality-gate` informativo integrado en `develop`, pero los status
+  checks obligatorios quedan pendientes hasta completar su estabilización;
 - nunca debe activarse como obligatorio un check inexistente;
 - se recomienda borrar automáticamente las ramas fusionadas, con comprobaciones
   adicionales para `release/*` y `hotfix/*`.
@@ -361,8 +369,23 @@ La decisión operativa queda cerrada:
 
 REP-GIT-002 ha definido la protección recomendada, pero continúa pendiente
 inventariar y confirmar la configuración remota, aplicar los rulesets de forma
-manual, disponer de un segundo revisor real y crear un `quality-gate` estable.
-También continúa pendiente el proceso formal de releases versionadas.
+manual y disponer de un segundo revisor real.
+
+REP-GIT-003-CI incorporó la infraestructura inicial de GitHub Actions:
+
+- el commit funcional `e59c317` añadió el workflow informativo `quality-gate`,
+  dos scripts auxiliares y la plantilla de Pull Request;
+- el PR #5, desde `ci/quality-gate-informativo` hacia `develop`, se integró
+  mediante el merge commit `74c3769`;
+- `repository-and-php`, `frontend-build` y `quality-gate` finalizaron con
+  estado `success`;
+- la rama remota de trabajo se eliminó tras el merge;
+- `develop` quedó limpio y sincronizado con `origin/develop`.
+
+El workflow todavía no es obligatorio y necesita validarse en más Pull
+Requests antes de incorporarlo a un ruleset. No existe `CODEOWNERS` y tampoco
+se ha confirmado que las protecciones remotas estén activas. También continúa
+pendiente el proceso formal de releases versionadas.
 
 ---
 

@@ -1060,3 +1060,79 @@ Estado: recomendación documentada, aplicación remota pendiente
 Siguiente paso: Inventariar manualmente **Settings → Rules → Rulesets**, crear
 y estabilizar el `quality-gate` y confirmar un segundo revisor antes de activar
 checks o aprobaciones obligatorias.
+
+---
+
+## CAMBIO-0036 - Cierre documental de REP-GIT-003-CI
+
+Fecha: 2026-07-29
+Agente: Codex / agente documentación EasyParte
+Rama: docs/cierre-rep-git-003-ci
+Tipo de cambio: documentación/repositorio/CI
+Resumen: Se registra la integración y primera validación real del
+`quality-gate` informativo para Pull Requests.
+
+Integración registrada:
+
+- Commit funcional: `e59c317 ci: añade quality gate informativo`.
+- Pull Request: `#5 — ci: añade quality gate informativo`.
+- Origen: `ci/quality-gate-informativo`.
+- Destino: `develop`.
+- Método: Create a merge commit.
+- Merge commit: `74c3769`.
+- El commit funcional `e59c317` se conserva separado del merge commit.
+- La rama remota de trabajo fue eliminada después del merge.
+- `develop` quedó limpio y sincronizado con `origin/develop`.
+
+Archivos integrados:
+
+- `.github/workflows/quality-gate.yml`
+- `.github/scripts/check_pr_target.php`
+- `.github/scripts/check_repository_hygiene.php`
+- `.github/pull_request_template.md`
+
+Checks reales del PR #5:
+
+```txt
+repository-and-php: success
+frontend-build: success
+quality-gate: success
+```
+
+Alcance confirmado:
+
+- El `quality-gate` continúa siendo informativo y no obligatorio.
+- No se modificaron ni activaron rulesets o protecciones remotas.
+- TEST-AVISOS-ME-001 no se ejecuta en GitHub Actions.
+- No se utilizó MariaDB ni se modificaron datos.
+- No se ejecutó `npm audit fix`.
+- No existe `CODEOWNERS` mientras no se confirme un segundo revisor real.
+- El escáner de secretos sigue siendo un control básico.
+- Las actions continúan usando referencias de versión mayor, no SHA completos.
+- Las vulnerabilidades detectadas por `npm audit` quedan fuera de esta tarea y
+  deben tratarse por separado.
+
+Archivos documentales modificados en este cierre:
+
+- `docs/repositorio/proteccion_ramas.md`
+- `docs/repositorio/repositorio.md`
+- `docs/seguimiento/registro_cambios_agentes.md`
+
+Estados funcionales conservados:
+
+- INC-0013 permanece `abierta`.
+- PEN-0006 permanece `parcial`.
+- PEN-0009 permanece `parcial`.
+
+Pruebas de este cierre: revisión de coherencia documental,
+`git diff --check` y `git status`.
+
+Riesgos: Una única ejecución real correcta no demuestra que el workflow esté
+completamente estabilizado. Antes de exigirlo en un ruleset debe validarse en
+más Pull Requests, conservar el nombre estable `quality-gate` y revisar los
+riesgos pendientes de dependencias, actions y secret scanning.
+
+Estado: integrado y validado inicialmente
+Siguiente paso: Observar el `quality-gate` en más Pull Requests hacia
+`develop` y `master`, sin convertirlo todavía en obligatorio, y confirmar un
+segundo revisor antes de exigir aprobaciones.
