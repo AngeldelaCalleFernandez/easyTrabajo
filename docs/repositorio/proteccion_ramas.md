@@ -15,9 +15,16 @@ reglas estén activas ni modifica la configuración remota.
 - El PR #4 siguió este flujo:
   `testing/automatizar-avisos-multiempresa` → `develop`, mediante el merge
   commit `9175e68`.
-- No existe `.github/`; actualmente no hay workflows, plantilla de Pull
-  Request ni `CODEOWNERS`.
 - El PR #4 no registró revisiones ni status checks.
+- `.github/` ya existe e incluye el workflow informativo `quality-gate`, sus
+  scripts auxiliares y una plantilla de Pull Request.
+- Todavía no existe `CODEOWNERS`, porque no se ha confirmado un segundo revisor
+  real.
+- El PR #5 fue la primera validación real del workflow:
+  `ci/quality-gate-informativo` → `develop`, mediante el merge commit
+  `74c3769`.
+- Los checks `repository-and-php`, `frontend-build` y `quality-gate` del PR #5
+  finalizaron con estado `success`.
 - No se ha podido confirmar que exista una protección remota activa.
 
 Por tanto, todas las reglas descritas a continuación quedan como
@@ -80,18 +87,29 @@ Cuando exista un segundo revisor, se deberá decidir:
 
 ## 6. Status checks y quality-gate
 
-Los status checks obligatorios quedan pendientes hasta crear y estabilizar un
-`quality-gate` reproducible.
+REP-GIT-003-CI incorporó a `develop` un workflow informativo llamado
+`quality-gate`. El PR #5 proporcionó su primera ejecución real validada y sus
+tres checks finalizaron correctamente:
+
+```txt
+repository-and-php: success
+frontend-build: success
+quality-gate: success
+```
+
+Esta validación inicial no convierte el check en obligatorio ni acredita que
+esté completamente estabilizado. Debe observarse en más Pull Requests hacia
+`develop` y `master` antes de incorporarlo a un ruleset.
 
 No debe activarse como obligatorio un check inexistente, renombrado, inestable
 o que no se ejecute para todos los Pull Requests afectados. Antes de exigirlo
 se debe:
 
-1. crear el workflow;
-2. validar su ejecución repetida en Pull Requests reales;
-3. fijar el nombre exacto del check;
-4. comprobar su comportamiento en `develop` y en promociones a `master`;
-5. definir cómo se resuelven fallos o indisponibilidad de la infraestructura.
+1. validar su ejecución repetida en más Pull Requests reales;
+2. conservar el nombre estable `quality-gate`;
+3. comprobar su comportamiento en `develop` y en promociones a `master`;
+4. definir cómo se resuelven fallos o indisponibilidad de la infraestructura;
+5. revisar los riesgos pendientes sin alterar el check de forma precipitada.
 
 ## 7. Merge y borrado de ramas
 
@@ -166,7 +184,7 @@ de referencias operativas pendientes.
    Pull Request y resolución de conversaciones.
 3. Confirmar que los merge commits siguen permitidos y que no se exige
    historial lineal.
-4. Crear y estabilizar el `quality-gate`.
+4. Continuar validando y estabilizando el `quality-gate` ya integrado.
 5. Confirmar la disponibilidad de un segundo revisor real.
 6. Activar después, y por separado, checks y aprobaciones obligatorias.
 7. Probar ambos rulesets con Pull Requests controlados.
@@ -177,6 +195,7 @@ de referencias operativas pendientes.
 
 - Confirmar la protección remota que existe actualmente.
 - Confirmar un segundo revisor real antes de exigir aprobaciones.
-- Crear y estabilizar el `quality-gate` antes de exigir status checks.
+- Completar la estabilización del `quality-gate` antes de exigirlo como status
+  check.
 - Definir los bypass estrictamente necesarios.
 - Revisar individualmente las ramas antiguas antes de eliminarlas.
