@@ -117,17 +117,19 @@ Reglas actuales de asignación:
    dentro de su empresa a empleados activos de esa empresa.
 5. `Tecnico` solo puede reasignar un aviso que ya esté asignado a su propio
    `id_empleado`, y debe elegir otro empleado activo de la misma empresa.
-6. `Tecnico` no puede reasignar avisos ajenos, libres, cancelados ni asignarse
-   el aviso a sí mismo.
-7. La interfaz oculta también la reasignación de avisos finalizados al
-   `Tecnico`; queda pendiente verificar por API que esta restricción se aplica
-   igualmente en backend.
+6. `Tecnico` no puede reasignar avisos ajenos, libres ni asignarse el aviso a
+   sí mismo.
+7. `Finalizada` y `Cancelada` son estados terminales. Ningún rol puede asignar,
+   reasignar ni coger un aviso en esos estados. El backend rechaza la operación
+   con HTTP 403 antes de modificar datos o registrar auditoría.
 8. La asignación, reasignación y toma de aviso correctas registran auditoría con
    la empresa, el usuario, el aviso y los valores anterior y nuevo de
    `id_empleado`.
 9. Los rechazos de autorización deben producirse antes de modificar el aviso.
 10. La cancelación sigue siendo una acción independiente mediante
     `PUT /api/avisos/{id}/cancelar`.
+11. No existe un flujo de reapertura de avisos dentro de los contratos de
+    asignación o toma.
 
 Estados recomendados:
 

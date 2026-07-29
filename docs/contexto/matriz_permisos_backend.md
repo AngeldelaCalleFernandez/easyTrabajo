@@ -1,7 +1,7 @@
 # Matriz minima de permisos backend - PEN-0005
 
 Fecha inicial: 2026-05-26
-Última actualización: 2026-07-27
+Última actualización: 2026-07-29
 Agente: Codex / agente backend-auditor EasyParte
 Estado: matriz actualizada; PEN-0005 permanece parcial
 
@@ -74,8 +74,8 @@ Notas:
 | `/api/avisos` | POST | Administrador, Atencion al Cliente y Tecnico | Valida IDs relacionados por empresa; Tecnico solo crea el aviso libre o asignado a si mismo. |
 | `/api/avisos/empleados-asignables` | GET | Administrador, Atencion al Cliente y Tecnico | Lista empleados activos de la empresa. Para Tecnico excluye su propio empleado. |
 | `/api/avisos/{id}` | PUT | Usuario autenticado dentro de su alcance | Edita datos generales y conserva la asignacion actual; `id_empleado` ya no cambia por este contrato. |
-| `/api/avisos/{id}/asignar` | PUT | Administrador y Atencion al Cliente; Tecnico condicionado | Asigna o reasigna dentro de la empresa. Tecnico solo puede mover un aviso propio a otro empleado, no uno libre, ajeno, cancelado ni a si mismo. |
-| `/api/avisos/{id}/coger` | PUT | Solo Tecnico | Toma un aviso libre usando el `id_empleado` del contexto autenticado. |
+| `/api/avisos/{id}/asignar` | PUT | Administrador y Atencion al Cliente; Tecnico condicionado | Asigna o reasigna dentro de la empresa. Ningún rol puede operar sobre avisos `Finalizada` o `Cancelada`; Tecnico solo puede mover un aviso propio a otro empleado, no uno libre, ajeno ni a si mismo. |
+| `/api/avisos/{id}/coger` | PUT | Solo Tecnico | Toma un aviso libre no terminal usando el `id_empleado` del contexto autenticado. Los estados `Finalizada` y `Cancelada` devuelven 403. |
 | `/api/avisos/{id}/cancelar` | PUT | Administrador y Atencion al Cliente; Tecnico condicionado | Tecnico solo cancela avisos propios. Conserva el registro. |
 | `/api/avisos/{id}` | DELETE | Ningun rol en el flujo actual | Devuelve 403 para evitar borrado fisico. |
 | `/api/partes` | GET | Cualquier usuario autenticado | Filtra por empresa; Tecnico ve solo sus partes. |
@@ -106,8 +106,8 @@ Convencion:
 | Editar datos generales del aviso | Si | Si | Parcial | El `PUT` general no cambia `id_empleado`; Tecnico queda limitado por propiedad. |
 | Listar empleados asignables para avisos | Si | Si | Parcial | Solo empleados activos de la empresa; para Tecnico se excluye su propio empleado. |
 | Asignar aviso libre a un empleado concreto | Si | Si | No | Usa `PUT /api/avisos/{id}/asignar`; Tecnico debe usar la accion separada Coger. |
-| Reasignar aviso ya asignado | Si | Si | Parcial | Tecnico solo puede reasignar un aviso propio, no cancelado, a otro empleado activo de su empresa y nunca a si mismo. |
-| Coger aviso libre | No | No | Parcial | Solo Tecnico mediante `PUT /api/avisos/{id}/coger`; el empleado se obtiene del contexto autenticado. |
+| Reasignar aviso ya asignado | Si | Si | Parcial | Solo sobre avisos no terminales. Tecnico además debe ser propietario, elegir otro empleado activo de su empresa y nunca asignarse a si mismo. |
+| Coger aviso libre | No | No | Parcial | Solo Tecnico mediante `PUT /api/avisos/{id}/coger`; el empleado se obtiene del contexto autenticado y el aviso no puede estar `Finalizada` ni `Cancelada`. |
 | Cancelar aviso | Si | Si | Parcial | Tecnico solo puede cancelar avisos asignados a el. No puede cancelar avisos sin asignar ni asignados a otros tecnicos. |
 | Borrar aviso fisicamente | No | No | No | `DELETE /api/avisos/{id}` permanece bloqueado con 403; este flujo conserva el aviso. |
 | Listar partes/albaranes | Si | Si | Parcial | Tecnico solo partes propios; Atencion al Cliente consulta operativa. |
@@ -193,8 +193,11 @@ Resultados manuales registrados en
 - La reasignacion correcta deja evento persistente en `auditoria_evento`.
 - Ninguna accion del flujo realiza borrado fisico.
 
-Quedan pendientes la prueba de reasignacion de aviso finalizado por API, una
-segunda empresa y la automatizacion. PEN-0005 y PEN-0009 continúan parciales.
+La prueba de reasignacion de aviso finalizado por API quedó superada el
+2026-07-29 mediante TEST-AVISOS-FIN-001. Administrador, Atencion al Cliente y
+Tecnico reciben 403 para estados `Finalizada` y `Cancelada`; coger un aviso
+libre terminal también devuelve 403. Los rechazos no cambian datos ni crean
+auditoria. PEN-0005 y PEN-0009 continúan parciales por el alcance restante.
 
 ## Permisos objetivo futuros
 

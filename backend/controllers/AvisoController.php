@@ -81,6 +81,13 @@ class AvisoController
         );
     }
 
+    private function isTerminalState($estado)
+    {
+        $estadoNormalizado = strtolower(trim((string)$estado));
+
+        return in_array($estadoNormalizado, ['finalizada', 'cancelada'], true);
+    }
+
     private function denyPermission()
     {
         http_response_code(403);
@@ -478,6 +485,12 @@ class AvisoController
                 return;
             }
 
+            if ($this->isTerminalState($aviso['estado'])) {
+                $this->rollbackIfActive();
+                $this->denyPermission();
+                return;
+            }
+
             if (!$this->activeEmployeeBelongsToEmpresa($idEmpleadoDestino, $usuarioLogueado->id_empresa)) {
                 $this->rollbackIfActive();
                 $this->denyForeignRelation();
@@ -497,7 +510,6 @@ class AvisoController
                     $idEmpleadoTecnico <= 0
                     || $idEmpleadoOrigen === null
                     || $idEmpleadoOrigen !== $idEmpleadoTecnico
-                    || strtolower((string)$aviso['estado']) === 'cancelada'
                     || (int)$idEmpleadoDestino === $idEmpleadoTecnico
                 ) {
                     $this->rollbackIfActive();
@@ -586,9 +598,14 @@ class AvisoController
                 return;
             }
 
+            if ($this->isTerminalState($aviso['estado'])) {
+                $this->rollbackIfActive();
+                $this->denyPermission();
+                return;
+            }
+
             if (
                 $aviso['id_empleado'] !== null
-                || strtolower((string)$aviso['estado']) === 'cancelada'
                 || !$this->activeEmployeeBelongsToEmpresa($idEmpleadoTecnico, $usuarioLogueado->id_empresa)
             ) {
                 $this->rollbackIfActive();
