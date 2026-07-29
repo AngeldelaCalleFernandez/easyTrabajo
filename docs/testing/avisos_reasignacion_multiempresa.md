@@ -43,9 +43,9 @@ bbdd/seed_avisos_reasignacion_multiempresa_pruebas.sql
 
 El fixture no modifica el seed multiempresa anterior ni
 `bbdd/export_base_datos.sql`. No desactiva claves foráneas, no crea partes y no
-contiene contraseñas en claro. Los roles `1` y `2` son dependencias existentes
-del catálogo; todos los identificadores de filas creadas por este fixture están
-reservados entre `9201` y `9272`.
+contiene contraseñas en claro. Los roles `1`, `2` y `3` son dependencias
+existentes del catálogo; todos los identificadores de filas creadas por este
+fixture están reservados entre `9201` y `9272`.
 
 ### Inventario de IDs
 
@@ -58,7 +58,8 @@ reservados entre `9201` y `9272`.
 | Cliente | 9231 | 9232 |
 | Administrador | 9241 | 9251 |
 | Técnico | 9242, vinculado a 9211 | 9252, vinculado a 9221 |
-| Avisos | 9261–9265 | 9271–9272 |
+| Atención al Cliente | 9243, sin empleado vinculado | — |
+| Avisos | 9261–9268 | 9271–9272 |
 
 ### Avisos iniciales
 
@@ -69,6 +70,9 @@ reservados entre `9201` y `9272`.
 | 9263 | 9201 | Pendiente | 9212 | Aviso ajeno al Técnico A |
 | 9264 | 9201 | Cancelada | 9211 | Rechazo de reasignación por estado |
 | 9265 | 9201 | Pendiente | Libre | Toma por el Técnico A |
+| 9266 | 9201 | Finalizada | 9211 | Rechazos FIN-01 a FIN-03 |
+| 9267 | 9201 | Finalizada | Libre | Rechazo FIN-04 de toma |
+| 9268 | 9201 | Cancelada | Libre | Rechazo FIN-08 de toma |
 | 9271 | 9202 | Pendiente | 9221 | Reasignación del Administrador B a 9222 |
 | 9272 | 9202 | Pendiente | Libre | Aislamiento de listados |
 
@@ -84,10 +88,10 @@ reservados entre `9201` y `9272`.
 6. Importar el archivo completo solo si el preflight es correcto. Si detecta
    una colisión o una dependencia ausente, el script no inserta ninguna fila.
 7. Confirmar los recuentos finales esperados: 2 empresas, 2 departamentos,
-   4 empleados, 2 clientes, 4 usuarios, 4 relaciones de rol y 7 avisos.
-8. Preparar cuatro sesiones separadas: Administrador A, Técnico A,
-   Administrador B y Técnico B. Referenciar las credenciales o tokens como
-   `Sesión A/B`; no copiarlos en este documento.
+   4 empleados, 2 clientes, 5 usuarios, 5 relaciones de rol y 10 avisos.
+8. Preparar cinco sesiones separadas: Administrador A, Técnico A, Atención al
+   Cliente A, Administrador B y Técnico B. Referenciar las credenciales o
+   tokens como `Sesión A/B`; no copiarlos en este documento.
 9. Ejecutar primero las pruebas negativas y después las positivas. Así los
    avisos conservan su estado inicial durante la validación de rechazos.
 
@@ -195,6 +199,36 @@ cruces y limpia los datos al terminar. El resultado no acredita tenant general
 ni auditoría general fuera de los avisos y operaciones incluidos en esta
 matriz. TEST-AVISOS-ME-001 queda implementado y validado.
 
+### TEST-AVISOS-FIN-002 — ejecución automatizada
+
+Ejecución: 2026-07-29, local/XAMPP
+
+```txt
+--preflight: correcto, exit code 0 y sin modificación de datos
+--run: correcto, exit code 0
+Backup: creado y verificado, 19.808 bytes
+SHA-256: 4C56697E277698AD0830805CD8F0B45CE0FFB95BD29E25D8CEB191A48A607966
+Fixture: 2 empresas, 2 departamentos, 4 empleados, 2 clientes,
+         5 usuarios, 5 relaciones de rol y 10 avisos
+Autenticaciones: 5 correctas
+Pruebas negativas: 15 correctas
+Pruebas positivas: 9 correctas
+Resultados totales: 29 correctos
+FIN-01 a FIN-08: HTTP 403, estado completo intacto y 0 eventos
+Eventos positivos: exactamente 4
+Cruces multiempresa: 0
+Rollback de --run: correcto
+Comprobación independiente: 0 residuos y 0 eventos
+--rollback-only independiente: correcto
+Comprobación final: 0 residuos, 0 eventos y 3 roles base intactos
+Tokens o contraseñas documentados: no
+```
+
+TEST-AVISOS-FIN-002 amplía el arnés sin modificar backend funcional. Las
+pruebas anteriores de TEST-AVISOS-ME-001 permanecen correctas y la matriz pasa
+de 20 a 29 resultados. El arnés sigue limitado a local/test y no se ejecuta en
+el `quality-gate` de GitHub.
+
 ## Baseline de auditoría y estado
 
 Antes de cualquier petición, guardar el valor devuelto:
@@ -209,7 +243,10 @@ Guardar también el estado inicial de los avisos:
 ```sql
 SELECT id_tarea, id_empresa, estado, id_empleado, fecha_fin
 FROM tarea
-WHERE id_tarea IN (9261, 9262, 9263, 9264, 9265, 9271, 9272)
+WHERE id_tarea IN (
+  9261, 9262, 9263, 9264, 9265,
+  9266, 9267, 9268, 9271, 9272
+)
 ORDER BY id_tarea;
 ```
 
@@ -236,8 +273,8 @@ debe conservarse sin cambios y no debe aparecer un evento nuevo.
 | AVISO-ME-N03 | Técnico A | `PUT /api/avisos/9271/asignar` con `{"id_empleado":9212}` | Rechazo genérico; 9271 sigue en 9221; cero eventos nuevos | HTTP 404; estado intacto; 0 eventos | Correcta |
 | AVISO-ME-N04 | Técnico A | `PUT /api/avisos/9264/asignar` con `{"id_empleado":9212}` | 403; 9264 sigue cancelado y asignado a 9211; cero eventos nuevos | HTTP 403; estado intacto; 0 eventos | Correcta |
 | AVISO-ME-N05 | Técnico A | `PUT /api/avisos/9261/asignar` con `{"id_empleado":9211}` | 403; 9261 sigue en 9211; cero eventos nuevos | HTTP 403; estado intacto; 0 eventos | Correcta |
-| AVISO-ME-N06 | Administrador A | `GET /api/avisos` y `GET /api/avisos/empleados-asignables` | No aparecen avisos 9271/9272 ni empleados 9221/9222 | HTTP 200; avisos 9261–9265; empleados 9211/9212 | Correcta |
-| AVISO-ME-N07 | Técnico A | Mismos listados | No aparecen avisos ni empleados de Empresa B; tampoco aparece 9211 entre asignables | HTTP 200; avisos 9261/9262/9264/9265; asignable 9212 | Correcta |
+| AVISO-ME-N06 | Administrador A | `GET /api/avisos` y `GET /api/avisos/empleados-asignables` | No aparecen avisos 9271/9272 ni empleados 9221/9222 | HTTP 200; avisos 9261–9268; empleados 9211/9212 | Correcta |
+| AVISO-ME-N07 | Técnico A | Mismos listados | No aparecen avisos ni empleados de Empresa B; tampoco aparece 9211 entre asignables | HTTP 200; avisos 9261/9262/9264/9265/9266/9267/9268; asignable 9212 | Correcta |
 
 ### Comprobación posterior a cada rechazo
 
@@ -264,8 +301,8 @@ la respuesta HTTP.
 
 | ID | Sesión | Petición o comprobación | Resultado esperado | Resultado obtenido | Estado |
 |---|---|---|---|---|---|
-| AVISO-ME-P01 | Administrador A | `GET /api/avisos` | Solo avisos 9261–9265; ningún aviso B | HTTP 200; avisos 9261–9265 | Correcta |
-| AVISO-ME-P02 | Técnico A | `GET /api/avisos` | Avisos propios o libres de A: 9261, 9262, 9264 y 9265; no 9263 ni avisos B | HTTP 200; avisos 9261/9262/9264/9265 | Correcta |
+| AVISO-ME-P01 | Administrador A | `GET /api/avisos` | Solo avisos 9261–9268; ningún aviso B | HTTP 200; avisos 9261–9268 | Correcta |
+| AVISO-ME-P02 | Técnico A | `GET /api/avisos` | Avisos propios o libres de A: 9261, 9262, 9264–9268; no 9263 ni avisos B | HTTP 200; avisos 9261/9262/9264/9265/9266/9267/9268 | Correcta |
 | AVISO-ME-P03 | Administrador A | `GET /api/avisos/empleados-asignables` | Empleados 9211 y 9212; ningún empleado B | HTTP 200; empleados 9211/9212 | Correcta |
 | AVISO-ME-P04 | Técnico A | `GET /api/avisos/empleados-asignables` | Solo 9212; no 9211, 9221 ni 9222 | HTTP 200; empleado 9212 | Correcta |
 | AVISO-ME-P05 | Técnico A | `PUT /api/avisos/9261/asignar` con `{"id_empleado":9212}` | 200; 9261 pasa de 9211 a 9212; evento `aviso_reasignado`, empresa 9201, usuario 9242 | HTTP 200; estado y evento 8 correctos | Correcta |
@@ -297,12 +334,15 @@ ORDER BY id_empleado;
 
 SELECT id_usuario, id_empresa, id_empleado, activo
 FROM usuario
-WHERE id_usuario IN (9241, 9242, 9251, 9252)
+WHERE id_usuario IN (9241, 9242, 9243, 9251, 9252)
 ORDER BY id_usuario;
 
 SELECT id_tarea, id_empresa, estado, id_empleado, id_cliente, id_departamento
 FROM tarea
-WHERE id_tarea IN (9261, 9262, 9263, 9264, 9265, 9271, 9272)
+WHERE id_tarea IN (
+  9261, 9262, 9263, 9264, 9265,
+  9266, 9267, 9268, 9271, 9272
+)
 ORDER BY id_tarea;
 ```
 
@@ -452,10 +492,10 @@ negativas y las nueve positivas cumplen el resultado esperado. Los eventos
 creados son los identificadores 8–11; los tres controles de cruce y el control
 de eventos inesperados devuelven cero.
 
-Resultado de la ejecución automatizada: **matriz superada** con `--preflight`
-y `--run` en exit code `0`. Las cuatro autenticaciones, las siete pruebas
-negativas y las nueve positivas fueron correctas; los controles de auditoría y
-cruce también fueron correctos.
+Resultado de la ejecución automatizada actual: **matriz superada** con
+`--preflight` y `--run` en exit code `0`. Las cinco autenticaciones, las quince
+pruebas negativas y las nueve positivas fueron correctas; los controles de
+auditoría y cruce también fueron correctos.
 
 ## Rollback
 
@@ -489,9 +529,12 @@ FROM (
   UNION ALL
   SELECT id_cliente FROM cliente WHERE id_cliente IN (9231, 9232)
   UNION ALL
-  SELECT id_usuario FROM usuario WHERE id_usuario IN (9241, 9242, 9251, 9252)
+  SELECT id_usuario FROM usuario WHERE id_usuario IN (9241, 9242, 9243, 9251, 9252)
   UNION ALL
-  SELECT id_tarea FROM tarea WHERE id_tarea IN (9261, 9262, 9263, 9264, 9265, 9271, 9272)
+  SELECT id_tarea FROM tarea WHERE id_tarea IN (
+    9261, 9262, 9263, 9264, 9265,
+    9266, 9267, 9268, 9271, 9272
+  )
 ) AS fixture;
 ```
 
@@ -503,10 +546,13 @@ Comprobar aparte que no quedan eventos:
 SELECT COUNT(*) AS eventos_restantes
 FROM auditoria_evento
 WHERE id_empresa IN (9201, 9202)
-   OR id_usuario IN (9241, 9242, 9251, 9252)
+   OR id_usuario IN (9241, 9242, 9243, 9251, 9252)
    OR (
      entidad = 'aviso'
-     AND entidad_id IN (9261, 9262, 9263, 9264, 9265, 9271, 9272)
+     AND entidad_id IN (
+       9261, 9262, 9263, 9264, 9265,
+       9266, 9267, 9268, 9271, 9272
+     )
    );
 ```
 
@@ -517,9 +563,9 @@ errores, no quedaron eventos relacionados y los dos roles base permanecieron
 intactos. El backup previo se conservó y su SHA-256 volvió a coincidir con el
 registrado.
 
-Resultado obtenido en la ejecución automatizada: `0` filas del fixture y `0`
-eventos relacionados después del rollback. Los `2` roles base permanecieron
-intactos.
+Resultado obtenido en TEST-AVISOS-FIN-002: `0` filas del fixture y `0` eventos
+relacionados después del rollback y de `--rollback-only`. Los `3` roles base
+permanecieron intactos.
 
 ## Validación complementaria de estados terminales
 
@@ -535,9 +581,9 @@ después de aplicar FIX-AVISOS-FIN-001. La matriz complementaria cubrió:
 
 Todos los rechazos conservaron `id_empresa`, `estado`, `id_empleado` y
 `fecha_fin`, generaron cero eventos y devolvieron respuestas sin detalles
-internos. El rollback final confirmó cero filas, cero eventos relacionados y
-los dos roles base intactos. Esta prueba complementaria no amplía el arnés
-TEST-AVISOS-ME-001 ni acredita tenant o auditoría general.
+internos. TEST-AVISOS-FIN-002 incorpora estos casos al arnés automatizado. El
+rollback final confirmó cero filas, cero eventos relacionados y los tres roles
+base intactos. La ampliación no acredita tenant o auditoría general.
 
 ## Pendientes
 

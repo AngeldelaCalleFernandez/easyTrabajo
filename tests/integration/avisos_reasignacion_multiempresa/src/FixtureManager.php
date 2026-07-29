@@ -21,9 +21,9 @@ final class FixtureManager
         );
 
         $hashes = array_values(array_unique($matches[0] ?? []));
-        if (count($hashes) !== 1 || count($matches[0] ?? []) !== 4) {
+        if (count($hashes) !== 1 || count($matches[0] ?? []) !== 5) {
             throw new RuntimeException(
-                'El seed no contiene el unico hash bcrypt esperado para cuatro usuarios.'
+                'El seed no contiene el unico hash bcrypt esperado para cinco usuarios.'
             );
         }
 

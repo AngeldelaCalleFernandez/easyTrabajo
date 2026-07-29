@@ -321,6 +321,8 @@ Fase minima `security/tenant-minimo`:
 - Las pruebas manuales TENANT-MIN-001 a TENANT-MIN-005 quedan registradas como `correcto`.
 - TEST-AVISOS-ME-001 valida manual y automáticamente el aislamiento
   multiempresa del alcance de avisos y reasignacion.
+- TEST-AVISOS-FIN-002 automatiza la regresión de ocho rechazos sobre avisos
+  `Finalizada` y `Cancelada`, conservando estado y aislamiento de Empresa B.
 
 ### Riesgos
 
@@ -470,6 +472,9 @@ Fase `AVISOS-REASIGNACION-AUDITADA`:
 - TEST-AVISOS-FIN-001 validó por API que los rechazos de asignación,
   reasignación y toma sobre avisos `Finalizada` o `Cancelada` generan cero
   eventos; las operaciones no terminales correctas conservan su auditoría.
+- TEST-AVISOS-FIN-002 incorpora esos ocho rechazos al arnés automatizado y
+  confirma que las cuatro operaciones positivas siguen generando exactamente
+  cuatro eventos sin cruces entre empresas.
 - INC-0013 permanece abierta porque la infraestructura todavía no cubre todas
   las acciones críticas.
 
