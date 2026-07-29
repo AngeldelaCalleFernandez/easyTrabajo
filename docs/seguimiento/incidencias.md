@@ -1130,3 +1130,51 @@ cambiar `id_empleado`. La reasignación autorizada se realiza ahora mediante
 `PUT /api/avisos/{id}/asignar`, con reglas separadas y auditoría. La persona
 responsable validó que un Técnico puede reasignar un aviso propio, pero no uno
 ajeno o cancelado ni a sí mismo. Esto no reabre INC-0017.
+
+---
+
+## INC-0018 - Avisos finalizados permiten reasignación y toma
+
+ID: INC-0018
+Título: Los avisos en estado terminal permiten cambiar su asignación
+Prioridad: alta
+Estado: resuelta y validada
+Detectado por: TEST-AVISOS-FIN-001
+Fecha: 2026-07-29
+
+### Descripción
+
+`AvisoController::assign()` solo bloqueaba `Cancelada` dentro del control
+exclusivo del Técnico. Administrador y Atención al Cliente no tenían control de
+estado terminal. `takeFree()` bloqueaba `Cancelada`, pero no `Finalizada`.
+La ejecución inicial de TEST-AVISOS-FIN-001 confirmó que `assign()` devolvía
+HTTP 200, cambiaba `id_empleado` y creaba auditoría sobre un aviso finalizado;
+la revisión estática detectó la misma ausencia de control en `takeFree()`.
+
+### Corrección aplicada
+
+`AvisoController` centraliza la detección de estados terminales, considerando
+exclusivamente `Finalizada` y `Cancelada` después de normalizar el valor. Tanto
+`assign()` como `takeFree()` comprueban la regla inmediatamente después de
+cargar el aviso con `SELECT ... FOR UPDATE`. El rechazo ejecuta rollback,
+devuelve HTTP 403 y termina antes de validar relaciones adicionales, ejecutar
+`UPDATE` o registrar auditoría.
+
+Archivo: `backend/controllers/AvisoController.php`.
+
+### Validación real
+
+- FIN-01 a FIN-08: HTTP 403, cero cambios y cero eventos.
+- REG-01 a REG-04: HTTP 200, solo cambia `id_empleado` y se crea exactamente un
+  evento `aviso_asignado`, `aviso_reasignado` o `aviso_autoasignado`.
+- ME-01: empleado de otra empresa rechazado con 403, sin cambios ni eventos.
+- ME-02: aviso de otra empresa rechazado con 404 genérico, sin cambios ni
+  eventos.
+- Las respuestas no exponen SQLSTATE, trazas PHP, rutas internas ni detalles
+  SQL.
+- Rollback final: cero filas y eventos residuales; dos roles base intactos.
+
+### Estado final
+
+Incidencia resuelta y validada el 2026-07-29. INC-0013 permanece abierta y
+PEN-0006/PEN-0009 permanecen parciales por su alcance general pendiente.

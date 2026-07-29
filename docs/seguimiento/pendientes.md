@@ -303,7 +303,8 @@ Hay filtrado parcial por `id_empresa`, pero no hay `TenantMiddleware` ni modelo 
 - [x] Crear/editar partes valida cliente, tarea y empleado de empresa.
 - [x] Frontend no envia `id_empresa: 1` en avisos ni administracion.
 - [x] Datos de prueba multiempresa preparados.
-- [ ] Prueba multiempresa positiva y negativa.
+- [x] Prueba multiempresa positiva y negativa completada para el alcance de
+  avisos y reasignacion.
 - [ ] TenantMiddleware centralizado.
 - [ ] Modelo multiempresa completo.
 
@@ -318,6 +319,8 @@ Fase minima `security/tenant-minimo`:
 - Se prepara guia de datos en `AGENT/testing/datos_prueba_multiempresa.md`.
 - Se crea seed opcional no destructivo en `bbdd/seed_multiempresa_pruebas.sql`.
 - Las pruebas manuales TENANT-MIN-001 a TENANT-MIN-005 quedan registradas como `correcto`.
+- TEST-AVISOS-ME-001 valida manual y automáticamente el aislamiento
+  multiempresa del alcance de avisos y reasignacion.
 
 ### Riesgos
 
@@ -325,7 +328,8 @@ Critico por separacion de datos.
 
 ### Siguiente paso
 
-Ejecutar pruebas multiempresa manuales y disenar `TenantMiddleware`/contexto centralizado en una fase posterior.
+Disenar `TenantMiddleware` y ampliar las pruebas multiempresa a los modulos
+restantes.
 
 ---
 
@@ -444,9 +448,11 @@ otras acciones criticas.
 - [x] Asignacion y reasignacion guardan valores anteriores/nuevos de `id_empleado`.
 - [x] No se registraron ni documentaron secretos o passwords en esta validacion.
 - [x] Reasignacion de aviso validada manualmente con evento persistente.
-- [ ] Endpoints criticos generan eventos.
-- [ ] Auditoria aislada por empresa validada con una segunda empresa.
-- [ ] Pruebas de auditoria automatizadas.
+- [ ] Los modulos criticos restantes generan los eventos requeridos.
+- [x] Aislamiento por empresa validado para la auditoria de asignaciones,
+  reasignaciones y toma de avisos.
+- [x] Pruebas automatizadas completadas para ese alcance de auditoria de avisos.
+- [ ] Cobertura y automatizacion general de los modulos criticos restantes.
 
 ### Avance aplicado
 
@@ -459,6 +465,11 @@ Fase `AVISOS-REASIGNACION-AUDITADA`:
   `aviso_autoasignado`.
 - La reasignacion auditada fue validada manualmente y queda registrada en
   `docs/testing/avisos_reasignacion.md`.
+- TEST-AVISOS-ME-001 valida de forma automatizada los eventos del alcance de
+  asignacion de avisos y su aislamiento entre dos empresas.
+- TEST-AVISOS-FIN-001 validó por API que los rechazos de asignación,
+  reasignación y toma sobre avisos `Finalizada` o `Cancelada` generan cero
+  eventos; las operaciones no terminales correctas conservan su auditoría.
 - INC-0013 permanece abierta porque la infraestructura todavía no cubre todas
   las acciones críticas.
 
@@ -470,9 +481,9 @@ auditoria completa del sistema.
 ### Siguiente paso
 
 Extender `AuditLogger` de forma controlada a las demás acciones críticas,
-definir consulta/protección de eventos, ejecutar la prueba con una segunda
-empresa y automatizar la regresión. PEN-0009 no debe pasar a `implementado`
-hasta completar y validar esa cobertura.
+definir consulta/protección de eventos y ampliar la cobertura y automatizacion
+a los modulos criticos restantes. PEN-0009 no debe pasar a `implementado` hasta
+completar y validar esa cobertura general.
 
 ---
 

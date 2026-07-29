@@ -521,9 +521,26 @@ Resultado obtenido en la ejecución automatizada: `0` filas del fixture y `0`
 eventos relacionados después del rollback. Los `2` roles base permanecieron
 intactos.
 
+## Validación complementaria de estados terminales
+
+TEST-AVISOS-FIN-001 se ejecutó por API real en local/XAMPP el 2026-07-29
+después de aplicar FIX-AVISOS-FIN-001. La matriz complementaria cubrió:
+
+- ocho rechazos sobre avisos `Finalizada` o `Cancelada` para Administrador,
+  Atencion al Cliente y Tecnico, todos con HTTP 403;
+- cuatro operaciones no terminales correctas, cada una con un único cambio de
+  `id_empleado` y un único evento esperado;
+- un empleado destino de otra empresa, rechazado con 403;
+- un aviso de otra empresa, rechazado con 404 genérico.
+
+Todos los rechazos conservaron `id_empresa`, `estado`, `id_empleado` y
+`fecha_fin`, generaron cero eventos y devolvieron respuestas sin detalles
+internos. El rollback final confirmó cero filas, cero eventos relacionados y
+los dos roles base intactos. Esta prueba complementaria no amplía el arnés
+TEST-AVISOS-ME-001 ni acredita tenant o auditoría general.
+
 ## Pendientes
 
-- Ejecutar por API la prueba de reasignación de un aviso finalizado.
 - Repetir periódicamente la matriz automatizada como regresión.
 - Implementar un endpoint protegido y filtrado por empresa para consultar
   auditoría; las consultas SQL de este documento son solo verificación local.

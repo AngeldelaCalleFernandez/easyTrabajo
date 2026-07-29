@@ -1136,3 +1136,61 @@ Estado: integrado y validado inicialmente
 Siguiente paso: Observar el `quality-gate` en más Pull Requests hacia
 `develop` y `master`, sin convertirlo todavía en obligatorio, y confirmar un
 segundo revisor antes de exigir aprobaciones.
+
+---
+
+## CAMBIO-0037 - Bloqueo de asignación en avisos terminales
+
+Fecha: 2026-07-29
+Agente: Codex / agente backend-testing-documentación EasyParte
+Rama: fix/bloquear-reasignacion-aviso-finalizado
+Tipo de cambio: seguridad/backend/testing/documentación
+Resumen: FIX-AVISOS-FIN-001 centraliza y aplica la regla que impide asignar,
+reasignar o coger avisos en estado `Finalizada` o `Cancelada`.
+
+Archivos modificados:
+
+- `backend/controllers/AvisoController.php`
+- `docs/contexto/reglas_de_negocio.md`
+- `docs/contexto/matriz_permisos_backend.md`
+- `docs/contexto/endpoints_api.md`
+- `docs/testing/avisos_reasignacion.md`
+- `docs/testing/avisos_reasignacion_multiempresa.md`
+- `docs/seguimiento/incidencias.md`
+- `docs/seguimiento/pendientes.md`
+- `docs/seguimiento/registro_cambios_agentes.md`
+
+Implementación:
+
+- detección central de los estados terminales `Finalizada` y `Cancelada`;
+- guard inmediato después de `SELECT ... FOR UPDATE` en `assign()` y
+  `takeFree()`;
+- rechazo HTTP 403 antes de consultas relacionales adicionales, actualización
+  o auditoría;
+- conservación de los controles por rol, empleado activo y empresa.
+
+Validación real local/XAMPP:
+
+- FIN-01 a FIN-08: ocho rechazos HTTP 403, cero cambios y cero eventos;
+- REG-01 a REG-04: cuatro respuestas HTTP 200, un único cambio válido y un
+  único evento esperado por operación;
+- ME-01: HTTP 403 y ME-02: HTTP 404, sin cambios ni eventos;
+- respuestas sin SQLSTATE, trazas PHP, rutas internas ni detalles SQL;
+- rollback con cero filas y eventos residuales y dos roles base intactos;
+- sintaxis del controlador y de todos los PHP versionados de backend correcta;
+- higiene del repositorio y `git diff --check` correctos.
+
+Estados resultantes:
+
+- TEST-AVISOS-FIN-001 queda `superado`;
+- INC-0018 queda `resuelta y validada`;
+- INC-0013 permanece `abierta`;
+- PEN-0006 permanece `parcial`;
+- PEN-0009 permanece `parcial`.
+
+No se modificaron frontend, rutas, `AuditLogger`, esquema, migraciones, fixtures
+versionados ni TEST-AVISOS-ME-001. No se ejecutó `npm audit fix`.
+
+Estado: implementado y validado en local
+Siguiente paso: Mantener este caso como regresión controlada y abordar cualquier
+ampliación del arnés en una tarea posterior independiente.

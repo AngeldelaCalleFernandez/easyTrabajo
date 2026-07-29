@@ -135,7 +135,7 @@ Notas:
 
 ## 9. Avisos
 
-Esta sección distingue el contrato local actual, validado el 2026-07-27, del
+Esta sección distingue el contrato local actual, validado hasta el 2026-07-29, del
 modelo REST objetivo descrito en otras secciones. Los roles actuales reales son
 `Administrador`, `Atencion al Cliente` y `Tecnico`.
 
@@ -145,8 +145,8 @@ modelo REST objetivo descrito en otras secciones. Los roles actuales reales son
 | GET | /avisos/empleados-asignables | Lista empleados activos de la empresa; para Tecnico excluye su propio empleado | Administrador, Atencion al Cliente, Tecnico | No |
 | POST | /avisos | Crea un aviso; Tecnico solo puede dejarlo libre o asignárselo a sí mismo | Administrador, Atencion al Cliente, Tecnico condicionado | Si hay asignación, registra el evento correspondiente |
 | PUT | /avisos/{id} | Edita datos generales sin cambiar `id_empleado` | Administrador, Atencion al Cliente, Tecnico dentro de su alcance | No registra reasignación |
-| PUT | /avisos/{id}/asignar | Asigna o reasigna a un empleado activo de la misma empresa | Administrador, Atencion al Cliente; Tecnico condicionado | `aviso_asignado` o `aviso_reasignado` |
-| PUT | /avisos/{id}/coger | Asigna un aviso libre al empleado del Tecnico autenticado | Solo Tecnico | `aviso_autoasignado` |
+| PUT | /avisos/{id}/asignar | Asigna o reasigna un aviso no terminal a un empleado activo de la misma empresa | Administrador, Atencion al Cliente; Tecnico condicionado | `aviso_asignado` o `aviso_reasignado` |
+| PUT | /avisos/{id}/coger | Asigna un aviso libre no terminal al empleado del Tecnico autenticado | Solo Tecnico | `aviso_autoasignado` |
 | PUT | /avisos/{id}/cancelar | Cambia el estado a `Cancelada` y conserva el aviso | Administrador, Atencion al Cliente; Tecnico propietario | Fuera de la validación de auditoría de esta fase |
 | DELETE | /avisos/{id} | Bloqueado con 403; no forma parte del flujo de cancelación o reasignación | Ninguno | No |
 
@@ -171,10 +171,15 @@ Reglas específicas de `PUT /avisos/{id}/asignar`:
 - Administrador y Atencion al Cliente pueden asignar o reasignar avisos de su
   empresa.
 - Tecnico solo puede reasignar un aviso ya asignado a su propio empleado.
-- Tecnico no puede usarlo sobre avisos libres, ajenos o cancelados, ni indicar
-  su propio empleado como destino.
+- Tecnico no puede usarlo sobre avisos libres o ajenos ni indicar su propio
+  empleado como destino.
+- `Finalizada` y `Cancelada` son estados terminales: Administrador, Atencion al
+  Cliente y Tecnico reciben HTTP 403 al intentar asignar o reasignar. El mismo
+  bloqueo se aplica a `PUT /avisos/{id}/coger`.
+- El rechazo terminal ocurre después de bloquear el aviso y antes de validar
+  relaciones de destino, actualizar datos o registrar auditoría.
 - La operación correcta se ejecuta junto con el registro de auditoría.
-- La validación por API de un aviso finalizado queda pendiente.
+- TEST-AVISOS-FIN-001 validó este contrato por API local el 2026-07-29.
 
 El modelo futuro con varios técnicos por aviso y recursos
 `/avisos/{id}/empleados` permanece como objetivo; no sustituye estos contratos

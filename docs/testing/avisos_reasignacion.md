@@ -12,9 +12,11 @@ asignación o reasignación, la toma de avisos libres y la cancelación. La
 validación comprueba además el primer alcance persistente de auditoría aplicado
 a las asignaciones de avisos.
 
-Las pruebas fueron ejecutadas manualmente por la persona responsable del
-proyecto. Codex únicamente registra los resultados aportados y no ha ejecutado
-SQL ni ha repetido las operaciones contra la base de datos.
+Las pruebas AVISO-REA-001 a AVISO-REA-012 fueron ejecutadas manualmente por la
+persona responsable del proyecto. En ese bloque, Codex únicamente registra los
+resultados aportados y no ejecutó SQL ni repitió las operaciones contra la base
+de datos. La ejecución posterior de TEST-AVISOS-FIN-001 se identifica y
+documenta de forma separada.
 
 ## Contratos incluidos
 
@@ -76,11 +78,28 @@ sistema.
 - Los rechazos no se presentan como controles exclusivamente visuales del
   frontend.
 
+## TEST-AVISOS-FIN-001 — estados terminales
+
+Fecha de ejecución: 2026-07-29
+Entorno: local/XAMPP
+Resultado: superado después de aplicar FIX-AVISOS-FIN-001
+
+La API real confirmó que `Finalizada` y `Cancelada` bloquean asignación,
+reasignación y toma para todos los roles implicados:
+
+- FIN-01 a FIN-08 devolvieron HTTP 403;
+- ningún rechazo cambió `id_empresa`, `estado`, `id_empleado` ni `fecha_fin`;
+- cada rechazo produjo cero eventos posteriores a su baseline;
+- REG-01 a REG-04 devolvieron HTTP 200, cambiaron únicamente `id_empleado` y
+  generaron exactamente el evento esperado;
+- ME-01 devolvió 403 y ME-02 devolvió 404 genérico, sin cambios ni eventos;
+- ninguna respuesta expuso SQLSTATE, trazas PHP, rutas internas ni detalles SQL;
+- el rollback dejó cero filas y eventos del fixture y conservó los dos roles
+  base.
+
 ## Pendientes
 
-- Probar explícitamente por API el intento de reasignar un aviso finalizado.
-- Repetir la matriz con una segunda empresa para verificar aislamiento
-  multiempresa real.
+- Repetir periódicamente la matriz multiempresa ya validada como regresión.
 - Automatizar las pruebas positivas y negativas de permisos.
 - Verificar y documentar la cobertura de auditoría de las demás acciones
   críticas antes de cerrar INC-0013 o marcar PEN-0009 como implementado.
